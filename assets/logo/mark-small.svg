@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <!-- Scoop: small-size cut for 24 px and below. Bigger play cutout, shallower bite, wider gap. -->
+  <!-- YT Downloader logo: small-size cut for 24 px and below. Bigger play cutout, shallower bite, wider gap. -->
   <path fill="#161616" fill-rule="evenodd" d="M54 24 H202 A34 34 0 0 1 236 58 V122 A34 34 0 0 1 202 156 H167.2 A44 44 0 0 0 88.8 156 H54 A34 34 0 0 1 20 122 V58 A34 34 0 0 1 54 24 Z M104 50 L104 110 L158 80 Z"/>
   <circle fill="#161616" cx="128" cy="212" r="30"/>
 </svg>

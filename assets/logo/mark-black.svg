@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <!-- Scoop: one-colour mark, black. -->
+  <!-- YT Downloader logo: one-colour mark, black. -->
   <path fill="#000000" fill-rule="evenodd" d="M58 28 H198 A30 30 0 0 1 228 58 V114 A30 30 0 0 1 198 144 H168 A40 40 0 0 0 88 144 H58 A30 30 0 0 1 28 114 V58 A30 30 0 0 1 58 28 Z M113 48 L113 92 L151 70 Z"/>
   <circle fill="#000000" cx="128" cy="200" r="36"/>
 </svg>

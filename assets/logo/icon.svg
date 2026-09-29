@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <!-- Scoop: app icon, primary. For 32 px and up. Plate 224 x 224, radius 50 (about 22 percent), Sunshine #FFC83D, ink mark. -->
+  <!-- YT Downloader logo: app icon, primary. For 32 px and up. Plate 224 x 224, radius 50 (about 22 percent), Sunshine #FFC83D, ink mark. -->
   <rect x="16" y="16" width="224" height="224" rx="50" fill="#FFC83D"/>
   <g transform="translate(128 128) scale(0.74) translate(-128 -132)" fill="#161616">
     <path fill-rule="evenodd" d="M58 28 H198 A30 30 0 0 1 228 58 V114 A30 30 0 0 1 198 144 H168 A40 40 0 0 0 88 144 H58 A30 30 0 0 1 28 114 V58 A30 30 0 0 1 58 28 Z M113 48 L113 92 L151 70 Z"/>

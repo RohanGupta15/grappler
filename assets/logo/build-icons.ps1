@@ -1,11 +1,11 @@
-# Renders the Scoop masters into the app's MSIX assets and AppIcon.ico.
+# Renders the logo masters into the app's MSIX assets and AppIcon.ico.
 # Uses headless Edge as the SVG rasteriser, so nothing extra has to be installed.
-# Run from anywhere: pwsh branding/scoop/build-icons.ps1
+# Run from anywhere: pwsh assets/logo/build-icons.ps1
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
 $assets = Join-Path $here '..\..\src\YtDownloader.App\Assets' | Resolve-Path
 $edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-$work = Join-Path ([IO.Path]::GetTempPath()) 'scoop-icons'
+$work = Join-Path ([IO.Path]::GetTempPath()) 'yt-downloader-icons'
 New-Item -ItemType Directory -Force $work | Out-Null
 
 # Draws one SVG at (w x h) inside a (canvasW x canvasH) transparent PNG, centred.
@@ -29,7 +29,7 @@ img{width:${w}px;height:${h}px;display:block}
 }
 
 function Icon([int]$size, [string]$out) {
-    $svg = if ($size -le 24) { 'scoop-icon-small.svg' } else { 'scoop-icon.svg' }
+    $svg = if ($size -le 24) { 'icon-small.svg' } else { 'icon.svg' }
     Render $svg $size $size $size $size $out
 }
 
@@ -43,14 +43,14 @@ foreach ($t in 16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 256) {
     Copy-Item (Join-Path $assets "Square44x44Logo.targetsize-$t.png") (Join-Path $assets "Square44x44Logo.targetsize-${t}_altform-lightunplated.png")
 }
 # Medium tile and Store logo.
-foreach ($s in 100, 200, 400) { $c = [int](150 * $s / 100); Render 'scoop-icon.svg' $c $c ([int]($c * 0.6)) ([int]($c * 0.6)) (Join-Path $assets "Square150x150Logo.scale-$s.png") }
+foreach ($s in 100, 200, 400) { $c = [int](150 * $s / 100); Render 'icon.svg' $c $c ([int]($c * 0.6)) ([int]($c * 0.6)) (Join-Path $assets "Square150x150Logo.scale-$s.png") }
 foreach ($s in 100, 200, 400) { Icon ([int](50 * $s / 100)) (Join-Path $assets "StoreLogo.scale-$s.png") }
 # Wide tile: the icon alone, centred. Windows prints the app name (YT Downloader) under it.
-foreach ($s in 100, 200) { $cw = 310 * $s / 100; $ch = 150 * $s / 100; $i = [int]($ch * 0.6); Render 'scoop-icon.svg' $cw $ch $i $i (Join-Path $assets "Wide310x150Logo.scale-$s.png") }
+foreach ($s in 100, 200) { $cw = 310 * $s / 100; $ch = 150 * $s / 100; $i = [int]($ch * 0.6); Render 'icon.svg' $cw $ch $i $i (Join-Path $assets "Wide310x150Logo.scale-$s.png") }
 # Splash: the icon on transparent; the manifest supplies the background colour.
-foreach ($s in 100, 200) { $cw = 620 * $s / 100; $ch = 300 * $s / 100; $i = [int]($ch * 0.5); Render 'scoop-icon.svg' $cw $ch $i $i (Join-Path $assets "SplashScreen.scale-$s.png") }
+foreach ($s in 100, 200) { $cw = 620 * $s / 100; $ch = 300 * $s / 100; $i = [int]($ch * 0.5); Render 'icon.svg' $cw $ch $i $i (Join-Path $assets "SplashScreen.scale-$s.png") }
 # Lock screen badge must be a white silhouette.
-foreach ($s in 100, 200) { $c = 24 * $s / 100; Render 'scoop-mark-white.svg' $c $c $c $c (Join-Path $assets "LockScreenLogo.scale-$s.png") }
+foreach ($s in 100, 200) { $c = 24 * $s / 100; Render 'mark-white.svg' $c $c $c $c (Join-Path $assets "LockScreenLogo.scale-$s.png") }
 
 # AppIcon.ico: PNG-compressed entries (Vista and later), small cut at 24 px and below.
 $sizes = 16, 20, 24, 32, 40, 48, 64, 96, 128, 256
