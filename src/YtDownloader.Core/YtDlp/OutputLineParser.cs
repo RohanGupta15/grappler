@@ -5,13 +5,14 @@ namespace YtDownloader.Core.YtDlp;
 public abstract record OutputEvent;
 
 /// <summary>Progress of the stream currently downloading (video and audio are separate streams).</summary>
-public sealed record DownloadProgress(long DownloadedBytes, long? TotalBytes, double? BytesPerSecond, TimeSpan? Eta)
+public sealed record DownloadProgress(long DownloadedBytes, long? TotalBytes, double? BytesPerSecond, TimeSpan? Eta, string? StreamPath = null)
     : OutputEvent
 {
     public double? Fraction => TotalBytes is > 0 ? (double)DownloadedBytes / TotalBytes.Value : null;
 }
 
-public sealed record StreamFinished : OutputEvent;
+/// <param name="StreamPath">The stream's file; its .part and .ytdl siblings exist while it downloads.</param>
+public sealed record StreamFinished(string? StreamPath = null) : OutputEvent;
 
 /// <summary>A post-processor (e.g. Merger, ExtractAudio) has started.</summary>
 public sealed record PostProcessing(string Step) : OutputEvent;
@@ -32,17 +33,20 @@ public static class OutputLineParser
         if (line.StartsWith(DownloadArgs.FileTag + "|", StringComparison.Ordinal))
             return new FileCompleted(line[(DownloadArgs.FileTag.Length + 1)..]);
 
-        var parts = line.Split('|');
+        // The stream path is last and may contain '|', so it keeps whatever follows the seventh separator.
+        var parts = line.Split('|', 8);
         if (parts[0] == DownloadArgs.ProgressTag && parts.Length >= 7)
         {
+            var path = parts.Length == 8 && parts[7] != "NA" ? parts[7] : null;
             return parts[1] switch
             {
                 "downloading" => new DownloadProgress(
                     DownloadedBytes: Long(parts[2]) ?? 0,
                     TotalBytes: Long(parts[3]) ?? Long(parts[4]),
                     BytesPerSecond: Double(parts[5]),
-                    Eta: Double(parts[6]) is { } eta ? TimeSpan.FromSeconds(eta) : null),
-                "finished" => new StreamFinished(),
+                    Eta: Double(parts[6]) is { } eta ? TimeSpan.FromSeconds(eta) : null,
+                    StreamPath: path),
+                "finished" => new StreamFinished(path),
                 _ => null,
             };
         }

@@ -25,7 +25,7 @@ public static class DownloadArgs
             "--no-mtime",
             "--newline", "--progress", "--no-colors",
             "--progress-template",
-            $"download:{ProgressTag}|%(progress.status)s|%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s",
+            $"download:{ProgressTag}|%(progress.status)s|%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s|%(progress.filename)s",
             "--progress-template", $"postprocess:{PostProcessTag}|%(progress.status)s|%(progress.postprocessor)s",
             "--print", $"after_move:{FileTag}|%(filepath)s",
         ];
@@ -46,14 +46,30 @@ public static class DownloadArgs
                 break;
         }
 
+        var options = request.Options ?? DownloadOptions.None;
+        if (options.SubtitleLanguage is { } lang && request.Quality is Quality.Video)
+            args.AddRange(["--write-subs", "--sub-langs", $"{lang}.*", "--convert-subs", "srt"]);
+        if (options.SkipSponsors)
+            args.AddRange(["--sponsorblock-remove", "sponsor"]);
+        if (options.TrimStart is not null || options.TrimEnd is not null)
+        {
+            var start = Seconds(options.TrimStart ?? TimeSpan.Zero);
+            var end = options.TrimEnd is { } e ? Seconds(e) : "inf";
+            args.AddRange(["--download-sections", $"*{start}-{end}", "--force-keyframes-at-cuts"]);
+        }
+
         args.AddRange(["--", request.Url]);
         return args;
     }
+
+    private static string Seconds(TimeSpan t) => t.TotalSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
 
     private static string[] Common(EnginePaths engine) =>
     [
         "--ignore-config",
         "--no-playlist",
+        // Playlists come back as a list of entries instead of resolving every video up front.
+        "--flat-playlist",
         "--js-runtimes", $"deno:{engine.Deno}",
     ];
 }

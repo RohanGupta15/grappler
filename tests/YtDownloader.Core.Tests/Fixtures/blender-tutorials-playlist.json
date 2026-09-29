@@ -1,0 +1,91 @@
+{
+  "_type": "playlist",
+  "id": "PLav47HAVZMjk8nQDr4iPHA8x4qnrcqRlZ",
+  "title": "Tutorials",
+  "channel": "Blender Studio",
+  "uploader": "Blender Studio",
+  "webpage_url": "https://www.youtube.com/playlist?list=PLav47HAVZMjk8nQDr4iPHA8x4qnrcqRlZ",
+  "playlist_count": 10,
+  "entries": [
+    {
+      "_type": "url",
+      "ie_key": "Youtube",
+      "id": "mBu_ZMs3lR8",
+      "url": "https://www.youtube.com/watch?v=mBu_ZMs3lR8",
+      "title": "NEW Course: FACIAL RIGGING by Blender Studio",
+      "duration": 111,
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/mBu_ZMs3lR8/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDHKn2JsGf7kC1Hxs56cAIdMcbVBA",
+          "height": 94,
+          "width": 168
+        },
+        {
+          "url": "https://i.ytimg.com/vi/mBu_ZMs3lR8/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDv5NU1vzdQFHJ3NdaK89LMjoaiQA",
+          "height": 110,
+          "width": 196
+        }
+      ]
+    },
+    {
+      "_type": "url",
+      "ie_key": "Youtube",
+      "id": "Ds_RYS0-chs",
+      "url": "https://www.youtube.com/watch?v=Ds_RYS0-chs",
+      "title": "Interactive Node Tools in Blender 4.2",
+      "duration": 794,
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/Ds_RYS0-chs/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLD46D-mQDH_3I7k8nxD2oDujf-FFw",
+          "height": 94,
+          "width": 168
+        },
+        {
+          "url": "https://i.ytimg.com/vi/Ds_RYS0-chs/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLBPHrMqakx0mUbzIM3P4KNCWcyx7g",
+          "height": 110,
+          "width": 196
+        }
+      ]
+    },
+    {
+      "_type": "url",
+      "ie_key": "Youtube",
+      "id": "rLfxq5KavzM",
+      "url": "https://www.youtube.com/watch?v=rLfxq5KavzM",
+      "title": "The New Matrix Socket in Blender 4.2",
+      "duration": 1502,
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/rLfxq5KavzM/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDwPo0V8IVj4Mo_AjRWueyYT5Vi5g",
+          "height": 94,
+          "width": 168
+        },
+        {
+          "url": "https://i.ytimg.com/vi/rLfxq5KavzM/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLCkZERBTtrBK2HKjyJkmAx2c9hXgg",
+          "height": 110,
+          "width": 196
+        }
+      ]
+    },
+    {
+      "_type": "url",
+      "ie_key": "Youtube",
+      "id": "RJbLiFTNHnI",
+      "url": "https://www.youtube.com/watch?v=RJbLiFTNHnI",
+      "title": "How to Use the New Simulation Nodes in Blender 3.6 LTS",
+      "duration": 1272,
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/RJbLiFTNHnI/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDQmCrrky7iwoQPDCN1y57__2GqpQ",
+          "height": 94,
+          "width": 168
+        },
+        {
+          "url": "https://i.ytimg.com/vi/RJbLiFTNHnI/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLAl44-ya_G6-9A1uZZelwITq3xFWw",
+          "height": 110,
+          "width": 196
+        }
+      ]
+    }
+  ]
+}

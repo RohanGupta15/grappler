@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
+using YtDownloader.App.Services;
 using YtDownloader.App.ViewModels;
 using YtDownloader.Core.Engine;
 
@@ -11,16 +12,31 @@ public partial class App : Application
 
     public static new App Current => (App)Application.Current;
 
-    public MainViewModel ViewModel { get; } =
-        new(new EngineManager(EngineManager.DefaultRoot, new HttpClient()), DownloadsFolder());
-
     public static string DataFolder { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "YtDownloader");
+
+    public EngineManager Engine { get; }
+    public AppSettings Settings { get; }
+    public DownloadQueue Queue { get; }
+    public MainViewModel ViewModel { get; }
+
+    public MainWindow Window => (MainWindow)_window!;
 
     public App()
     {
         InitializeComponent();
         UnhandledException += (_, e) => LogCrash(e.Exception);
+
+        Engine = new EngineManager(EngineManager.DefaultRoot, new HttpClient());
+        Settings = AppSettings.Load(Path.Combine(DataFolder, "settings.json"), DownloadsFolder());
+        Queue = new DownloadQueue(Engine, Settings);
+        ViewModel = new MainViewModel(Engine, Settings, Queue);
+    }
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        _window = new MainWindow();
+        _window.Activate();
     }
 
     private static void LogCrash(Exception ex)
@@ -31,12 +47,6 @@ public partial class App : Application
             File.AppendAllText(Path.Combine(DataFolder, "crash.log"), $"[{DateTime.Now:O}] {ex}\n\n");
         }
         catch (IOException) { }
-    }
-
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
-    {
-        _window = new MainWindow();
-        _window.Activate();
     }
 
     // The user may have moved Downloads, so ask the shell rather than assuming %USERPROFILE%\Downloads.

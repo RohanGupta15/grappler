@@ -8,11 +8,12 @@ public sealed class YtDlpException(string message) : Exception(message);
 /// <summary>Runs yt-dlp as a child process and translates its output.</summary>
 public sealed class YtDlpRunner(EnginePaths engine)
 {
-    public async Task<VideoInfo> GetInfoAsync(string url, CancellationToken ct)
+    /// <summary>Looks up a link, which may be a single video or a playlist.</summary>
+    public async Task<MediaInfo> GetInfoAsync(string url, CancellationToken ct)
     {
         var json = new StringBuilder();
         await RunAsync(DownloadArgs.ForInfo(url, engine), line => json.AppendLine(line), null, ct);
-        return VideoInfoParser.Parse(json.ToString());
+        return MediaInfoParser.Parse(json.ToString());
     }
 
     /// <summary>Downloads and returns the final file path, reporting parsed output events as they arrive.</summary>

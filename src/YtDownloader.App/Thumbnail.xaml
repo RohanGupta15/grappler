@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="YtDownloader.App.Thumbnail"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:YtDownloader.App">
+    <Border
+        Width="112"
+        Height="63"
+        Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+        CornerRadius="{StaticResource ControlCornerRadius}">
+        <Grid>
+            <FontIcon
+                FontSize="20"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Glyph="&#xE714;" />
+            <Image Source="{x:Bind local:Converters.Thumb(Url), Mode=OneWay}" Stretch="UniformToFill" />
+            <Border
+                Margin="4"
+                Padding="4,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Background="#CC000000"
+                CornerRadius="3"
+                Visibility="{x:Bind local:Converters.VisibleIf(Duration), Mode=OneWay}">
+                <TextBlock
+                    Foreground="White"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind Duration, Mode=OneWay}" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

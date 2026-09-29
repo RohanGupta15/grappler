@@ -1,45 +1,74 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using YtDownloader.App.Services;
 using YtDownloader.Core.Engine;
-using YtDownloader.Core.YtDlp;
 
 namespace YtDownloader.App.ViewModels;
 
-public sealed record QualityOption(string Label, Quality Quality)
+public sealed partial class EngineComponentItem : ObservableObject
 {
-    public override string ToString() => Label;
+    public EngineComponentItem(string name, bool installed)
+    {
+        Name = name;
+        IsDone = installed;
+        Progress = installed ? 100 : 0;
+        Detail = installed ? "Ready" : "Waiting";
+    }
+
+    public string Name { get; }
+
+    [ObservableProperty]
+    public partial double Progress { get; set; }
+
+    [ObservableProperty]
+    public partial string Detail { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsDone { get; set; }
 }
 
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly EngineManager _engine;
+    private string? _dismissedClipboardUrl;
 
-    public MainViewModel(EngineManager engine, string outputFolder)
+    public MainViewModel(EngineManager engine, AppSettings settings, DownloadQueue queue)
     {
         _engine = engine;
-        OutputFolder = outputFolder;
+        Settings = settings;
+        Queue = queue;
+        DefaultQuality = QualityOption.FromKey(settings.DefaultQuality);
+        EngineComponents = EngineManager.ComponentNames.Select(n => new EngineComponentItem(n, engine.IsComponentInstalled(n))).ToList();
+        queue.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(DownloadQueue.IsEmpty)) OnPropertyChanged(nameof(ShowEmptyState)); };
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.DefaultQuality) && DefaultQuality.Key != settings.DefaultQuality)
+                DefaultQuality = QualityOption.FromKey(settings.DefaultQuality);
+        };
     }
+
+    public AppSettings Settings { get; }
+    public DownloadQueue Queue { get; }
 
     // ---- Engine setup ----
 
+    public IReadOnlyList<EngineComponentItem> EngineComponents { get; }
+
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanUseApp))]
+    [NotifyPropertyChangedFor(nameof(ShowEmptyState))]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     public partial bool IsEngineReady { get; set; }
 
     [ObservableProperty]
     public partial bool IsInstallingEngine { get; set; }
 
     [ObservableProperty]
-    public partial string EngineStatus { get; set; } = "";
-
-    [ObservableProperty]
-    public partial double EngineProgress { get; set; }
-
-    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEngineError))]
     public partial string? EngineError { get; set; }
 
-    public bool CanUseApp => IsEngineReady;
+    public bool HasEngineError => EngineError is not null;
+
+    public bool ShowEmptyState => Queue.IsEmpty;
 
     [RelayCommand]
     private async Task EnsureEngineAsync()
@@ -56,16 +85,18 @@ public sealed partial class MainViewModel : ObservableObject
         {
             await _engine.InstallAsync(new Progress<EngineInstallProgress>(p =>
             {
-                EngineStatus = p.TotalBytes is { } total
-                    ? $"Downloading {p.Component}: {Format.Bytes(p.DownloadedBytes)} of {Format.Bytes(total)}"
-                    : $"Downloading {p.Component}: {Format.Bytes(p.DownloadedBytes)}";
-                EngineProgress = (p.Fraction ?? 0) * 100;
+                var c = EngineComponents.First(x => x.Name == p.Component);
+                c.Progress = (p.Fraction ?? 0) * 100;
+                c.IsDone = p.Finished;
+                c.Detail = p.Finished
+                    ? $"Done · {Format.Bytes(p.DownloadedBytes)}"
+                    : p.TotalBytes is { } total ? $"{Format.Bytes(p.DownloadedBytes)} of {Format.Bytes(total)}" : Format.Bytes(p.DownloadedBytes);
             }), CancellationToken.None);
             IsEngineReady = true;
         }
         catch (Exception ex)
         {
-            EngineError = $"Couldn't set up the download engine: {ex.Message}";
+            EngineError = $"Couldn't download the tools YT Downloader needs. Check your internet connection and try again. ({ex.Message})";
         }
         finally
         {
@@ -73,166 +104,68 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    // ---- Link + preview ----
+    // ---- Add bar ----
+
+    public IReadOnlyList<QualityOption> QualityChoices => QualityOption.Standard;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(FetchInfoCommand))]
+    public partial QualityOption DefaultQuality { get; set; }
+
+    partial void OnDefaultQualityChanged(QualityOption value) => Settings.DefaultQuality = value.Key;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     public partial string Url { get; set; } = "";
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVideo))]
-    public partial VideoInfo? Video { get; set; }
+    private static bool IsWebLink(string text) =>
+        Uri.TryCreate(text.Trim(), UriKind.Absolute, out var u) && u.Scheme is "http" or "https";
 
-    public bool HasVideo => Video is not null;
+    private bool CanAdd() => IsEngineReady && IsWebLink(Url);
 
-    [ObservableProperty]
-    public partial string? FetchError { get; set; }
-
-    public ObservableCollection<QualityOption> QualityOptions { get; } = [];
-
-    [ObservableProperty]
-    public partial QualityOption? SelectedQuality { get; set; }
-
-    // Fetching replaces the preview, so it's blocked while a download is running.
-    private bool CanFetch() => !IsDownloading && Uri.TryCreate(Url.Trim(), UriKind.Absolute, out var u) && u.Scheme is "http" or "https";
-
-    [RelayCommand(CanExecute = nameof(CanFetch))]
-    private async Task FetchInfoAsync(CancellationToken ct)
+    [RelayCommand(CanExecute = nameof(CanAdd))]
+    private async Task AddAsync()
     {
-        FetchError = null;
-        Video = null;
-        ResetDownloadState();
-        try
-        {
-            var info = await new YtDlpRunner(_engine.Paths).GetInfoAsync(Url.Trim(), ct);
-            QualityOptions.Clear();
-            foreach (var option in BuildQualityOptions(info.AvailableHeights))
-                QualityOptions.Add(option);
-            SelectedQuality = QualityOptions.FirstOrDefault();
-            Video = info;
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            FetchError = ex.Message;
-        }
+        var url = Url.Trim();
+        Url = "";
+        if (ClipboardUrl == url) ClipboardUrl = null;
+        await Queue.AddAsync(url, DefaultQuality);
     }
 
-    private static IEnumerable<QualityOption> BuildQualityOptions(IReadOnlyList<int> heights)
+    // ---- Clipboard offer ----
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasClipboardUrl))]
+    public partial string? ClipboardUrl { get; set; }
+
+    public bool HasClipboardUrl => ClipboardUrl is not null;
+
+    /// <summary>Called when the window is activated with the clipboard's text.</summary>
+    public void OfferClipboard(string? text)
     {
-        yield return new("Best quality" + (heights.Count > 0 ? $" ({Format.Height(heights[0])})" : ""), Quality.BestVideo);
-        foreach (var h in heights.Skip(1).Where(h => h >= 144))
-            yield return new(Format.Height(h), Quality.VideoUpTo(h));
-        yield return new("Audio only (MP3)", Quality.AudioMp3);
-        yield return new("Audio only (M4A)", Quality.AudioM4a);
+        if (!Settings.OfferClipboard || !IsEngineReady || text is null) return;
+        text = text.Trim();
+        if (!IsWebLink(text) || !IsVideoSite(text) || text == _dismissedClipboardUrl || text == Url || Queue.Contains(text)) return;
+        ClipboardUrl = text;
     }
 
-    // ---- Download ----
-
-    [ObservableProperty]
-    public partial string OutputFolder { get; set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsIdle))]
-    [NotifyCanExecuteChangedFor(nameof(FetchInfoCommand))]
-    public partial bool IsDownloading { get; set; }
-
-    public bool IsIdle => !IsDownloading;
-
-    [ObservableProperty]
-    public partial double DownloadProgress { get; set; }
-
-    [ObservableProperty]
-    public partial bool IsProgressIndeterminate { get; set; }
-
-    [ObservableProperty]
-    public partial string DownloadStatus { get; set; } = "";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasCompletedFile), nameof(CompletedFileName))]
-    public partial string? CompletedFile { get; set; }
-
-    public bool HasCompletedFile => CompletedFile is not null;
-    public string CompletedFileName => Path.GetFileName(CompletedFile ?? "");
-
-    [ObservableProperty]
-    public partial string? DownloadError { get; set; }
-
-    private void ResetDownloadState()
+    private static bool IsVideoSite(string url)
     {
-        CompletedFile = null;
-        DownloadError = null;
-        DownloadStatus = "";
-        DownloadProgress = 0;
+        var host = new Uri(url).Host.ToLowerInvariant();
+        return host is "youtu.be" || host == "youtube.com" || host.EndsWith(".youtube.com");
     }
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private async Task DownloadAsync(CancellationToken ct)
+    [RelayCommand]
+    private async Task AddClipboardAsync()
     {
-        if (Video is null || SelectedQuality is null) return;
-        ResetDownloadState();
-        IsDownloading = true;
-        IsProgressIndeterminate = true;
-        DownloadStatus = "Starting…";
+        if (ClipboardUrl is not { } url) return;
+        ClipboardUrl = null;
+        await Queue.AddAsync(url, DefaultQuality);
+    }
 
-        // Video downloads fetch separate video and audio streams, then merge them.
-        var isVideo = SelectedQuality.Quality is Quality.Video;
-        var expectedStreams = isVideo ? 2 : 1;
-        var finishedStreams = 0;
-
-        var progress = new Progress<OutputEvent>(e =>
-        {
-            switch (e)
-            {
-                case DownloadProgress p:
-                    IsProgressIndeterminate = p.Fraction is null;
-                    var overall = (Math.Min(finishedStreams, expectedStreams - 1) + (p.Fraction ?? 0)) / expectedStreams;
-                    DownloadProgress = overall * 100;
-                    var what = !isVideo ? "audio" : finishedStreams == 0 ? "video" : "audio";
-                    DownloadStatus = string.Join(" · ", new[]
-                    {
-                        $"Downloading {what}",
-                        p.TotalBytes is { } t ? $"{Format.Bytes(p.DownloadedBytes)} of {Format.Bytes(t)}" : Format.Bytes(p.DownloadedBytes),
-                        p.BytesPerSecond is { } s ? $"{Format.Bytes((long)s)}/s" : null,
-                        p.Eta is { } eta ? $"{Format.Duration(eta)} left" : null,
-                    }.Where(x => x is not null));
-                    break;
-                case StreamFinished:
-                    finishedStreams++;
-                    break;
-                case PostProcessing pp:
-                    IsProgressIndeterminate = true;
-                    DownloadStatus = pp.Step switch
-                    {
-                        "Merger" => "Merging video and audio…",
-                        "ExtractAudio" => "Converting audio…",
-                        _ => "Finishing up…",
-                    };
-                    break;
-            }
-        });
-
-        try
-        {
-            var request = new DownloadRequest(Video.WebpageUrl ?? Url.Trim(), SelectedQuality.Quality, OutputFolder);
-            CompletedFile = await new YtDlpRunner(_engine.Paths).DownloadAsync(request, progress, ct);
-            DownloadStatus = "";
-            DownloadProgress = 100;
-        }
-        catch (OperationCanceledException)
-        {
-            DownloadStatus = "Download cancelled.";
-            DownloadProgress = 0;
-        }
-        catch (Exception ex)
-        {
-            DownloadError = ex.Message;
-            DownloadStatus = "";
-        }
-        finally
-        {
-            IsProgressIndeterminate = false;
-            IsDownloading = false;
-        }
+    [RelayCommand]
+    private void DismissClipboard()
+    {
+        _dismissedClipboardUrl = ClipboardUrl;
+        ClipboardUrl = null;
     }
 }

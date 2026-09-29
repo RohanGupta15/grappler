@@ -1,79 +1,111 @@
-using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.Windows.Storage.Pickers;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using YtDownloader.App.ViewModels;
-using YtDownloader.Core.YtDlp;
 
 namespace YtDownloader.App;
 
 public sealed partial class MainPage : Page
 {
+    private bool _dialogOpen;
+
     public MainViewModel ViewModel { get; } = App.Current.ViewModel;
 
     public MainPage()
     {
         InitializeComponent();
-        Loaded += async (_, _) => await ViewModel.EnsureEngineCommand.ExecuteAsync(null);
+        BuildQualityMenu();
+        ViewModel.Queue.PlaylistAdded += async (_, p) =>
+        {
+            p.ChooseRequested += async (_, _) => await ShowPlaylistDialogAsync(p);
+            await ShowPlaylistDialogAsync(p);
+        };
+        Loaded += async (_, _) =>
+        {
+            if (!ViewModel.IsEngineReady && !ViewModel.IsInstallingEngine)
+                await ViewModel.EnsureEngineCommand.ExecuteAsync(null);
+        };
     }
 
-    // ---- x:Bind helpers ----
+    public static string EmptyTitle(bool ready) => ready ? "Paste a link to get started" : "Your downloads will show up here";
 
-    public static bool HasText(string? s) => !string.IsNullOrEmpty(s);
+    public static string EmptyBody(bool ready) => ready
+        ? "Copy a video or playlist link from your browser, then press Ctrl+V anywhere in this window. It downloads in the quality picked next to Add."
+        : "You can paste a link as soon as setup finishes.";
 
-    public static Visibility VisibleIfText(string? s) => HasText(s) ? Visibility.Visible : Visibility.Collapsed;
-
-    public static ImageSource? Thumbnail(VideoInfo? v) =>
-        v?.ThumbnailUrl is { } url ? new BitmapImage(new Uri(url)) : null;
-
-    public static string Byline(VideoInfo? v)
+    // MenuFlyout items can't be data-bound, so the quality menu is built here.
+    private void BuildQualityMenu()
     {
-        if (v is null) return "";
-        var duration = v.Duration is { } d ? Format.Duration(d) : null;
-        return string.Join(" · ", new[] { v.Channel, duration }.Where(x => !string.IsNullOrEmpty(x)));
+        foreach (var option in ViewModel.QualityChoices)
+        {
+            var item = new RadioMenuFlyoutItem { Text = option.Label, GroupName = "quality", IsChecked = option == ViewModel.DefaultQuality };
+            item.Click += (_, _) => ViewModel.DefaultQuality = option;
+            QualityMenu.Items.Add(item);
+        }
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(MainViewModel.DefaultQuality)) return;
+            foreach (var item in QualityMenu.Items.OfType<RadioMenuFlyoutItem>())
+                item.IsChecked = item.Text == ViewModel.DefaultQuality.Label;
+        };
     }
 
-    // ---- Event handlers ----
+    private async Task AddIfValidAsync()
+    {
+        if (ViewModel.AddCommand.CanExecute(null))
+            await ViewModel.AddCommand.ExecuteAsync(null);
+    }
 
     private async void UrlBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == VirtualKey.Enter && ViewModel.FetchInfoCommand.CanExecute(null))
+        if (e.Key != VirtualKey.Enter) return;
+        e.Handled = true;
+        await AddIfValidAsync();
+    }
+
+    // Ctrl+V anywhere outside a text field pastes the link and adds it straight away.
+    private async void PasteAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (FocusManager.GetFocusedElement(XamlRoot) is TextBox) return;
+        args.Handled = true;
+        await PasteAndAddAsync();
+    }
+
+    private async void Paste_Click(object sender, RoutedEventArgs e) => await PasteAndAddAsync();
+
+    private async Task PasteAndAddAsync()
+    {
+        try
         {
-            e.Handled = true;
-            await ViewModel.FetchInfoCommand.ExecuteAsync(null);
+            var content = Clipboard.GetContent();
+            if (!content.Contains(StandardDataFormats.Text)) return;
+            ViewModel.Url = (await content.GetTextAsync()).Trim();
         }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            return;
+        }
+        await AddIfValidAsync();
     }
 
-    private async void Paste_Click(object sender, RoutedEventArgs e)
-    {
-        var content = Clipboard.GetContent();
-        if (!content.Contains(StandardDataFormats.Text)) return;
-        ViewModel.Url = (await content.GetTextAsync()).Trim();
-        if (ViewModel.FetchInfoCommand.CanExecute(null))
-            await ViewModel.FetchInfoCommand.ExecuteAsync(null);
-    }
+    private void Settings_Click(object sender, RoutedEventArgs e) => App.Current.Window.OpenSettings();
 
-    private async void ChangeFolder_Click(object sender, RoutedEventArgs e)
+    private async Task ShowPlaylistDialogAsync(PlaylistItem playlist)
     {
-        var picker = new FolderPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
-        var result = await picker.PickSingleFolderAsync();
-        if (result is not null) ViewModel.OutputFolder = result.Path;
-    }
-
-    private void OpenFile_Click(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.CompletedFile is { } path && File.Exists(path))
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-    }
-
-    private void ShowInFolder_Click(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.CompletedFile is { } path)
-            Process.Start("explorer.exe", $"/select,\"{path}\"");
+        // Only one ContentDialog can be open at a time.
+        if (_dialogOpen || !ViewModel.Queue.Playlists.Contains(playlist)) return;
+        _dialogOpen = true;
+        try
+        {
+            var dialog = new PlaylistDialog(playlist) { XamlRoot = XamlRoot };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                playlist.StartCommand.Execute(null);
+        }
+        finally
+        {
+            _dialogOpen = false;
+        }
     }
 }

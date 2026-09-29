@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace YtDownloader.App.ViewModels;
 
 internal static class Format
@@ -12,7 +14,7 @@ internal static class Format
             value /= 1024;
             unit++;
         }
-        return unit == 0 ? $"{bytes} B" : $"{value:0.0} {units[unit]}";
+        return unit == 0 ? $"{bytes} B" : value >= 100 ? $"{value:0} {units[unit]}" : $"{value:0.#} {units[unit]}";
     }
 
     public static string Duration(TimeSpan t) =>
@@ -27,4 +29,19 @@ internal static class Format
         >= 720 => $"{h}p (HD)",
         _ => $"{h}p",
     };
+
+    /// <summary>Parses "90", "1:30" or "1:02:03"; blank gives null.</summary>
+    public static bool TryParseTime(string? text, out TimeSpan? value)
+    {
+        value = null;
+        if (string.IsNullOrWhiteSpace(text)) return true;
+        double seconds = 0;
+        foreach (var part in text.Trim().Split(':'))
+        {
+            if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) || n < 0) return false;
+            seconds = seconds * 60 + n;
+        }
+        value = TimeSpan.FromSeconds(seconds);
+        return true;
+    }
 }

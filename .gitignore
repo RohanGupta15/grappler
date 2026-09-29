@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 # '*.app' above is a macOS rule; git on Windows matches it case-insensitively against YtDownloader.App.
 !src/YtDownloader.App/
 !src/YtDownloader.App/Properties/PublishProfiles/*.pubxml
+
+# Impeccable review screenshots are regenerated each review
+.impeccable/review/

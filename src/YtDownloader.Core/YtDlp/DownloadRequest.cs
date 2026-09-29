@@ -16,4 +16,16 @@ public abstract record Quality
     public sealed record Audio(string Format) : Quality;
 }
 
-public sealed record DownloadRequest(string Url, Quality Quality, string OutputFolder);
+/// <summary>Optional extras. Subtitles only apply to video downloads.</summary>
+public sealed record DownloadOptions
+{
+    public static readonly DownloadOptions None = new();
+
+    /// <summary>Language code such as "en"; null means no subtitles.</summary>
+    public string? SubtitleLanguage { get; init; }
+    public bool SkipSponsors { get; init; }
+    public TimeSpan? TrimStart { get; init; }
+    public TimeSpan? TrimEnd { get; init; }
+}
+
+public sealed record DownloadRequest(string Url, Quality Quality, string OutputFolder, DownloadOptions? Options = null);

@@ -4,224 +4,602 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:YtDownloader.App"
-    xmlns:vm="using:YtDownloader.App.ViewModels">
+    xmlns:tk="using:CommunityToolkit.WinUI.Controls"
+    xmlns:vm="using:YtDownloader.App.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator
+            Key="V"
+            Invoked="PasteAccelerator_Invoked"
+            Modifiers="Control" />
+    </Page.KeyboardAccelerators>
 
     <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
+        <Style x:Key="RowCardStyle" TargetType="Grid">
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="{StaticResource OverlayCornerRadius}" />
-            <Setter Property="Padding" Value="20" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="ColumnSpacing" Value="16" />
         </Style>
-    </Page.Resources>
+        <Style
+            x:Key="IconButtonStyle"
+            BasedOn="{StaticResource DefaultButtonStyle}"
+            TargetType="Button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style x:Key="CaptionSecondaryStyle" BasedOn="{StaticResource CaptionTextBlockStyle}" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            MaxWidth="760"
-            Padding="24,12,24,32"
-            Spacing="16">
-
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Download a video" />
-
-            <!--  First-run engine setup  -->
-            <InfoBar
-                Title="Setting up the download engine"
-                IsClosable="False"
-                IsOpen="{x:Bind ViewModel.IsInstallingEngine, Mode=OneWay}"
-                Message="{x:Bind ViewModel.EngineStatus, Mode=OneWay}"
-                Severity="Informational">
-                <InfoBar.Content>
-                    <ProgressBar
-                        Margin="0,0,0,12"
-                        Maximum="100"
-                        Value="{x:Bind ViewModel.EngineProgress, Mode=OneWay}" />
-                </InfoBar.Content>
-            </InfoBar>
-
-            <InfoBar
-                Title="Setup failed"
-                IsClosable="False"
-                IsOpen="{x:Bind local:MainPage.HasText(ViewModel.EngineError), Mode=OneWay}"
-                Message="{x:Bind ViewModel.EngineError, Mode=OneWay}"
-                Severity="Error">
-                <InfoBar.ActionButton>
-                    <Button Command="{x:Bind ViewModel.EnsureEngineCommand}" Content="Try again" />
-                </InfoBar.ActionButton>
-            </InfoBar>
-
-            <!--  Link input  -->
-            <Grid ColumnSpacing="8">
+        <!--  Downloading  -->
+        <DataTemplate x:Key="ActiveTemplate" x:DataType="vm:DownloadItem">
+            <Grid Style="{StaticResource RowCardStyle}">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBox
-                    x:Name="UrlBox"
-                    IsEnabled="{x:Bind ViewModel.CanUseApp, Mode=OneWay}"
-                    KeyDown="UrlBox_KeyDown"
-                    PlaceholderText="Paste a YouTube link"
-                    Text="{x:Bind ViewModel.Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <Button
+                <local:Thumbnail Url="{x:Bind ThumbnailUrl, Mode=OneWay}" Duration="{x:Bind DurationText, Mode=OneWay}" />
+                <StackPanel
                     Grid.Column="1"
-                    VerticalAlignment="Stretch"
-                    Click="Paste_Click"
-                    IsEnabled="{x:Bind ViewModel.CanUseApp, Mode=OneWay}"
-                    ToolTipService.ToolTip="Paste link from clipboard">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE77F;" />
-                        <TextBlock Text="Paste" />
-                    </StackPanel>
-                </Button>
+                    VerticalAlignment="Center"
+                    Spacing="6">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{x:Bind Title, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Style="{StaticResource CaptionSecondaryStyle}"
+                            Text="{x:Bind PercentText, Mode=OneWay}" />
+                    </Grid>
+                    <ProgressBar
+                        IsIndeterminate="{x:Bind IsIndeterminate, Mode=OneWay}"
+                        Maximum="100"
+                        Value="{x:Bind Progress, Mode=OneWay}" />
+                    <TextBlock
+                        Style="{StaticResource CaptionSecondaryStyle}"
+                        Text="{x:Bind StatusText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
                 <Button
                     Grid.Column="2"
-                    MinWidth="96"
-                    VerticalAlignment="Stretch"
-                    Command="{x:Bind ViewModel.FetchInfoCommand}"
-                    Content="Fetch"
-                    Style="{StaticResource AccentButtonStyle}" />
+                    AutomationProperties.Name="Pause"
+                    Command="{x:Bind PauseCommand}"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Pause">
+                    <FontIcon FontSize="16" Glyph="&#xE769;" />
+                </Button>
+                <Button
+                    Grid.Column="3"
+                    AutomationProperties.Name="Cancel download"
+                    Command="{x:Bind CancelCommand}"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Cancel">
+                    <FontIcon FontSize="16" Glyph="&#xE711;" />
+                </Button>
             </Grid>
+        </DataTemplate>
 
-            <StackPanel
-                Orientation="Horizontal"
-                Spacing="12"
-                Visibility="{x:Bind ViewModel.FetchInfoCommand.IsRunning, Mode=OneWay}">
-                <ProgressRing
-                    Width="20"
-                    Height="20"
-                    IsActive="True" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Looking up video…" />
-            </StackPanel>
-
-            <InfoBar
-                Title="Couldn't load that link"
-                IsOpen="{x:Bind local:MainPage.HasText(ViewModel.FetchError), Mode=OneWay}"
-                Message="{x:Bind ViewModel.FetchError, Mode=OneWay}"
-                Severity="Error" />
-
-            <!--  Preview + options  -->
-            <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasVideo, Mode=OneWay}">
-                <StackPanel Spacing="20">
-                    <Grid ColumnSpacing="16">
+        <!--  Waiting, looking up, paused: expands to show options  -->
+        <DataTemplate x:Key="WaitingTemplate" x:DataType="vm:DownloadItem">
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                IsEnabled="{x:Bind CanEditOptions, Mode=OneWay}"
+                IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
+                <Expander.Header>
+                    <Grid Padding="0,12" ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border
-                            Width="224"
-                            Height="126"
-                            Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
-                            CornerRadius="{StaticResource ControlCornerRadius}">
-                            <Image Source="{x:Bind local:MainPage.Thumbnail(ViewModel.Video), Mode=OneWay}" Stretch="UniformToFill" />
-                        </Border>
+                        <local:Thumbnail Url="{x:Bind ThumbnailUrl, Mode=OneWay}" Duration="{x:Bind DurationText, Mode=OneWay}" />
                         <StackPanel
                             Grid.Column="1"
                             VerticalAlignment="Center"
-                            Spacing="4">
+                            Spacing="2">
                             <TextBlock
-                                MaxLines="3"
-                                Style="{StaticResource SubtitleTextBlockStyle}"
-                                Text="{x:Bind ViewModel.Video.Title, Mode=OneWay, FallbackValue=''}"
-                                TextTrimming="CharacterEllipsis"
-                                TextWrapping="Wrap" />
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind local:MainPage.Byline(ViewModel.Video), Mode=OneWay}" />
-                        </StackPanel>
-                    </Grid>
-
-                    <Grid ColumnSpacing="12" RowSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="260" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <ComboBox
-                            HorizontalAlignment="Stretch"
-                            Header="Quality"
-                            IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}"
-                            ItemsSource="{x:Bind ViewModel.QualityOptions}"
-                            SelectedItem="{x:Bind ViewModel.SelectedQuality, Mode=TwoWay}" />
-                        <StackPanel Grid.Column="1" Spacing="8">
-                            <TextBlock Text="Save to" />
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox
-                                    IsReadOnly="True"
-                                    Text="{x:Bind ViewModel.OutputFolder, Mode=OneWay}"
-                                    ToolTipService.ToolTip="{x:Bind ViewModel.OutputFolder, Mode=OneWay}" />
-                                <Button
-                                    Grid.Column="1"
-                                    VerticalAlignment="Stretch"
-                                    Click="ChangeFolder_Click"
-                                    Content="Change…"
-                                    IsEnabled="{x:Bind ViewModel.IsIdle, Mode=OneWay}" />
-                            </Grid>
-                        </StackPanel>
-                    </Grid>
-
-                    <!--  Progress  -->
-                    <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.IsDownloading, Mode=OneWay}">
-                        <ProgressBar
-                            IsIndeterminate="{x:Bind ViewModel.IsProgressIndeterminate, Mode=OneWay}"
-                            Maximum="100"
-                            Value="{x:Bind ViewModel.DownloadProgress, Mode=OneWay}" />
-                    </StackPanel>
-                    <TextBlock
-                        Margin="0,-12,0,0"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind ViewModel.DownloadStatus, Mode=OneWay}"
-                        Visibility="{x:Bind local:MainPage.VisibleIfText(ViewModel.DownloadStatus), Mode=OneWay}" />
-
-                    <InfoBar
-                        Title="Download failed"
-                        IsOpen="{x:Bind local:MainPage.HasText(ViewModel.DownloadError), Mode=OneWay}"
-                        Message="{x:Bind ViewModel.DownloadError, Mode=OneWay}"
-                        Severity="Error" />
-
-                    <InfoBar
-                        Title="Download complete"
-                        IsClosable="False"
-                        IsOpen="{x:Bind ViewModel.HasCompletedFile, Mode=OneWay}"
-                        Message="{x:Bind ViewModel.CompletedFileName, Mode=OneWay}"
-                        Severity="Success">
-                        <InfoBar.Content>
-                            <StackPanel
-                                Margin="0,0,0,12"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <Button Click="OpenFile_Click" Content="Open" />
-                                <Button Click="ShowInFolder_Click" Content="Show in folder" />
-                            </StackPanel>
-                        </InfoBar.Content>
-                    </InfoBar>
-
-                    <StackPanel
-                        HorizontalAlignment="Right"
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <Button
-                            Command="{x:Bind ViewModel.DownloadCancelCommand}"
-                            Content="Cancel"
-                            Visibility="{x:Bind ViewModel.IsDownloading, Mode=OneWay}" />
-                        <Button
-                            MinWidth="120"
-                            Command="{x:Bind ViewModel.DownloadCommand}"
-                            Style="{StaticResource AccentButtonStyle}">
+                                FontWeight="SemiBold"
+                                Text="{x:Bind Title, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="16" Glyph="&#xE896;" />
-                                <TextBlock Text="Download" />
+                                <ProgressRing
+                                    Width="12"
+                                    Height="12"
+                                    IsActive="{x:Bind IsLookingUp, Mode=OneWay}"
+                                    Visibility="{x:Bind IsLookingUp, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource CaptionSecondaryStyle}" Text="{x:Bind StatusText, Mode=OneWay}" />
                             </StackPanel>
+                        </StackPanel>
+                        <Button
+                            Grid.Column="2"
+                            AutomationProperties.Name="Resume"
+                            Command="{x:Bind ResumeCommand}"
+                            Style="{StaticResource IconButtonStyle}"
+                            ToolTipService.ToolTip="Resume"
+                            Visibility="{x:Bind IsPaused, Mode=OneWay}">
+                            <FontIcon FontSize="16" Glyph="&#xE768;" />
                         </Button>
+                        <Button
+                            Grid.Column="3"
+                            AutomationProperties.Name="Remove"
+                            Command="{x:Bind CancelCommand}"
+                            Style="{StaticResource IconButtonStyle}"
+                            ToolTipService.ToolTip="Remove">
+                            <FontIcon FontSize="16" Glyph="&#xE711;" />
+                        </Button>
+                    </Grid>
+                </Expander.Header>
+                <tk:WrapPanel HorizontalSpacing="16" VerticalSpacing="12">
+                    <ComboBox
+                        Width="200"
+                        Header="Quality"
+                        ItemsSource="{x:Bind QualityOptions}"
+                        SelectedItem="{x:Bind SelectedQuality, Mode=TwoWay}" />
+                    <ComboBox
+                        Width="200"
+                        Header="Subtitles"
+                        ItemsSource="{x:Bind SubtitleOptions}"
+                        SelectedItem="{x:Bind SelectedSubtitles, Mode=TwoWay}" />
+                    <StackPanel Width="200" Spacing="8">
+                        <TextBlock Text="Trim" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                AutomationProperties.Name="Trim start"
+                                PlaceholderText="0:00"
+                                Text="{x:Bind TrimStartText, Mode=TwoWay}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="to" />
+                            <TextBox
+                                Grid.Column="2"
+                                AutomationProperties.Name="Trim end"
+                                PlaceholderText="{x:Bind DurationText, Mode=OneWay}"
+                                Text="{x:Bind TrimEndText, Mode=TwoWay}" />
+                        </Grid>
                     </StackPanel>
+                    <ToggleSwitch
+                        Width="200"
+                        Header="Skip sponsor segments"
+                        IsOn="{x:Bind SkipSponsors, Mode=TwoWay}" />
+                </tk:WrapPanel>
+            </Expander>
+        </DataTemplate>
+
+        <!--  Playlists  -->
+        <DataTemplate x:Key="PlaylistTemplate" x:DataType="vm:PlaylistItem">
+            <Grid Style="{StaticResource RowCardStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon
+                    Height="40"
+                    FontSize="20"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE90B;" />
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Spacing="2">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{x:Bind Title}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Style="{StaticResource CaptionSecondaryStyle}"
+                        Text="{x:Bind Summary, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+                <Button
+                    Grid.Column="2"
+                    Command="{x:Bind ChooseCommand}"
+                    Content="Choose videos" />
+                <Button
+                    Grid.Column="3"
+                    Command="{x:Bind StartCommand}"
+                    Content="{x:Bind StartLabel, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button
+                    Grid.Column="4"
+                    AutomationProperties.Name="Remove playlist"
+                    Command="{x:Bind RemoveCommand}"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Remove">
+                    <FontIcon FontSize="16" Glyph="&#xE711;" />
+                </Button>
+            </Grid>
+        </DataTemplate>
+
+        <!--  Done and failed  -->
+        <DataTemplate x:Key="FinishedTemplate" x:DataType="vm:DownloadItem">
+            <Grid
+                MinHeight="48"
+                Padding="16,8"
+                Style="{StaticResource RowCardStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon
+                    FontSize="16"
+                    Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                    Glyph="&#xE930;"
+                    Visibility="{x:Bind IsDone, Mode=OneWay}" />
+                <FontIcon
+                    FontSize="16"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    Glyph="&#xE783;"
+                    Visibility="{x:Bind IsFailed, Mode=OneWay}" />
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Vertical">
+                    <TextBlock Text="{x:Bind FileName, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Style="{StaticResource CaptionSecondaryStyle}"
+                        Text="{x:Bind ErrorMessage, Mode=OneWay}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind local:Converters.VisibleIf(ErrorMessage), Mode=OneWay}" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource CaptionSecondaryStyle}"
+                    Text="{x:Bind SizeText, Mode=OneWay}" />
+                <StackPanel
+                    Grid.Column="3"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    Visibility="{x:Bind IsDone, Mode=OneWay}">
+                    <Button Command="{x:Bind OpenCommand}" Content="Open" />
+                    <Button
+                        AutomationProperties.Name="Show in folder"
+                        Command="{x:Bind ShowInFolderCommand}"
+                        Style="{StaticResource IconButtonStyle}"
+                        ToolTipService.ToolTip="Show in folder">
+                        <FontIcon FontSize="16" Glyph="&#xE838;" />
+                    </Button>
+                </StackPanel>
+                <StackPanel
+                    Grid.Column="3"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    Visibility="{x:Bind IsFailed, Mode=OneWay}">
+                    <Button Command="{x:Bind RetryCommand}" Content="Retry" />
+                    <Button
+                        AutomationProperties.Name="Remove"
+                        Command="{x:Bind CancelCommand}"
+                        Style="{StaticResource IconButtonStyle}"
+                        ToolTipService.ToolTip="Remove">
+                        <FontIcon FontSize="16" Glyph="&#xE711;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="GroupHeaderGridStyle" TargetType="Grid">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="4,0,0,0" />
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="Compact" />
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="UrlBox.(Grid.ColumnSpan)" Value="1" />
+                        <Setter Target="QualityButton.(Grid.Row)" Value="0" />
+                        <Setter Target="QualityButton.(Grid.Column)" Value="1" />
+                        <Setter Target="QualityButton.HorizontalAlignment" Value="Left" />
+                        <Setter Target="AddButton.(Grid.Row)" Value="0" />
+                        <Setter Target="Divider.(Grid.Row)" Value="0" />
+                        <Setter Target="SettingsButton.(Grid.Row)" Value="0" />
+                        <Setter Target="AddBar.Padding" Value="24,4,24,16" />
+                        <Setter Target="Lists.Padding" Value="24,12,24,24" />
+                        <Setter Target="Banners.Margin" Value="24,24,24,0" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <!--  Add bar on Mica. Compact: link on its own row, controls below.  -->
+        <Grid
+            x:Name="AddBar"
+            Padding="16,4,16,16"
+            ColumnSpacing="8"
+            RowSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBox
+                x:Name="UrlBox"
+                Grid.ColumnSpan="5"
+                AutomationProperties.Name="Video or playlist link"
+                IsEnabled="{x:Bind ViewModel.IsEngineReady, Mode=OneWay}"
+                KeyDown="UrlBox_KeyDown"
+                PlaceholderText="Paste a video or playlist link"
+                Text="{x:Bind ViewModel.Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <DropDownButton
+                x:Name="QualityButton"
+                Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Quality for new links"
+                Content="{x:Bind ViewModel.DefaultQuality.Label, Mode=OneWay}"
+                IsEnabled="{x:Bind ViewModel.IsEngineReady, Mode=OneWay}"
+                ToolTipService.ToolTip="Quality for new links">
+                <DropDownButton.Flyout>
+                    <MenuFlyout x:Name="QualityMenu" Placement="BottomEdgeAlignedRight" />
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            <Button
+                x:Name="AddButton"
+                Grid.Row="1"
+                AutomationProperties.Name="Add"
+                Grid.Column="2"
+                MinWidth="96"
+                Command="{x:Bind ViewModel.AddCommand}"
+                Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="16" Glyph="&#xE896;" />
+                    <TextBlock Text="Add" />
+                </StackPanel>
+            </Button>
+            <Rectangle
+                x:Name="Divider"
+                Grid.Row="1"
+                Grid.Column="3"
+                Width="1"
+                Height="20"
+                Margin="4,0"
+                Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            <Button
+                x:Name="SettingsButton"
+                Grid.Row="1"
+                Grid.Column="4"
+                AutomationProperties.Name="Settings"
+                Click="Settings_Click"
+                Style="{StaticResource IconButtonStyle}"
+                ToolTipService.ToolTip="Settings">
+                <FontIcon FontSize="16" Glyph="&#xE713;" />
+            </Button>
+        </Grid>
+
+        <!--  Content layer  -->
+        <Grid
+            Grid.Row="1"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0"
+            CornerRadius="8,8,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel
+                x:Name="Banners"
+                Margin="12,12,12,0"
+                Spacing="8">
+                <InfoBar
+                    Title="Getting ready"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.IsInstallingEngine, Mode=OneWay}"
+                    Message="Downloading the tools YT Downloader needs. This happens once and takes about a minute."
+                    Severity="Informational">
+                    <ItemsRepeater Margin="0,0,0,16" ItemsSource="{x:Bind ViewModel.EngineComponents}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="8" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:EngineComponentItem">
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="96" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="150" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind Name}" />
+                                    <ProgressBar
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Maximum="100"
+                                        Value="{x:Bind Progress, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Style="{StaticResource CaptionSecondaryStyle}"
+                                        Text="{x:Bind Detail, Mode=OneWay}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </InfoBar>
+
+                <InfoBar
+                    Title="Setup didn't finish"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.HasEngineError, Mode=OneWay}"
+                    Message="{x:Bind ViewModel.EngineError, Mode=OneWay}"
+                    Severity="Error">
+                    <InfoBar.ActionButton>
+                        <Button Command="{x:Bind ViewModel.EnsureEngineCommand}" Content="Try again" />
+                    </InfoBar.ActionButton>
+                </InfoBar>
+
+                <InfoBar
+                    Title="Link on your clipboard"
+                    CloseButtonCommand="{x:Bind ViewModel.DismissClipboardCommand}"
+                    IsOpen="{x:Bind ViewModel.HasClipboardUrl, Mode=OneWay}"
+                    Message="{x:Bind ViewModel.ClipboardUrl, Mode=OneWay}"
+                    Severity="Informational">
+                    <InfoBar.IconSource>
+                        <FontIconSource Glyph="&#xE77F;" />
+                    </InfoBar.IconSource>
+                    <InfoBar.ActionButton>
+                        <Button
+                            Command="{x:Bind ViewModel.AddClipboardCommand}"
+                            Content="Add it"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </InfoBar.ActionButton>
+                </InfoBar>
+            </StackPanel>
+
+            <!--  Empty state  -->
+            <StackPanel
+                Grid.Row="1"
+                MaxWidth="440"
+                Padding="16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="12"
+                Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay}">
+                <FontIcon
+                    FontSize="48"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE896;" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="{x:Bind local:MainPage.EmptyTitle(ViewModel.IsEngineReady), Mode=OneWay}"
+                    TextAlignment="Center" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind local:MainPage.EmptyBody(ViewModel.IsEngineReady), Mode=OneWay}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <Button
+                    Margin="0,8,0,0"
+                    HorizontalAlignment="Center"
+                    AutomationProperties.Name="Paste from clipboard"
+                    Click="Paste_Click"
+                    IsEnabled="{x:Bind ViewModel.IsEngineReady, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="16" Glyph="&#xE77F;" />
+                        <TextBlock Text="Paste from clipboard" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!--  Grouped list  -->
+            <ScrollViewer Grid.Row="1" Visibility="{x:Bind local:Converters.VisibleIfNot(ViewModel.ShowEmptyState), Mode=OneWay}">
+                <StackPanel
+                    x:Name="Lists"
+                    Padding="12,8,12,16"
+                    Spacing="4">
+                    <Grid Style="{StaticResource GroupHeaderGridStyle}" Visibility="{x:Bind ViewModel.Queue.HasActive, Mode=OneWay}">
+                        <TextBlock VerticalAlignment="Center">
+                            <Run FontWeight="SemiBold" Text="Downloading" />
+                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Queue.ActiveCount, Mode=OneWay}" />
+                        </TextBlock>
+                        <HyperlinkButton
+                            HorizontalAlignment="Right"
+                            Command="{x:Bind ViewModel.Queue.PauseAllCommand}"
+                            Content="Pause all" />
+                    </Grid>
+                    <ItemsRepeater ItemTemplate="{StaticResource ActiveTemplate}" ItemsSource="{x:Bind ViewModel.Queue.Active}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="4" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+
+                    <Grid
+                        Margin="0,8,0,0"
+                        Style="{StaticResource GroupHeaderGridStyle}"
+                        Visibility="{x:Bind ViewModel.Queue.HasWaiting, Mode=OneWay}">
+                        <TextBlock VerticalAlignment="Center">
+                            <Run FontWeight="SemiBold" Text="Waiting" />
+                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Queue.WaitingCount, Mode=OneWay}" />
+                        </TextBlock>
+                    </Grid>
+                    <ItemsRepeater ItemTemplate="{StaticResource WaitingTemplate}" ItemsSource="{x:Bind ViewModel.Queue.Waiting}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="4" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+
+                    <Grid
+                        Margin="0,8,0,0"
+                        Style="{StaticResource GroupHeaderGridStyle}"
+                        Visibility="{x:Bind ViewModel.Queue.HasPlaylists, Mode=OneWay}">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="Playlists" />
+                    </Grid>
+                    <ItemsRepeater ItemTemplate="{StaticResource PlaylistTemplate}" ItemsSource="{x:Bind ViewModel.Queue.Playlists}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="4" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+
+                    <Grid
+                        Margin="0,8,0,0"
+                        Style="{StaticResource GroupHeaderGridStyle}"
+                        Visibility="{x:Bind ViewModel.Queue.HasFinished, Mode=OneWay}">
+                        <TextBlock VerticalAlignment="Center">
+                            <Run FontWeight="SemiBold" Text="Done" />
+                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Queue.FinishedCount, Mode=OneWay}" />
+                        </TextBlock>
+                        <HyperlinkButton
+                            HorizontalAlignment="Right"
+                            Command="{x:Bind ViewModel.Queue.ClearFinishedCommand}"
+                            Content="Clear list" />
+                    </Grid>
+                    <ItemsRepeater ItemTemplate="{StaticResource FinishedTemplate}" ItemsSource="{x:Bind ViewModel.Queue.Finished}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="4" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </Page>

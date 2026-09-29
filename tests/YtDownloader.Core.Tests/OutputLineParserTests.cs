@@ -19,6 +19,24 @@ public class OutputLineParserTests
     }
 
     [Fact]
+    public void Reports_the_stream_file_being_written_even_with_pipes_in_the_path()
+    {
+        var p = Assert.IsType<DownloadProgress>(OutputLineParser.Parse(
+            @"YTDL|downloading|1024|433081|NA|NA|NA|C:\out\A | B [jNQXAC9IVRw].f133.mp4"));
+
+        Assert.Equal(@"C:\out\A | B [jNQXAC9IVRw].f133.mp4", p.StreamPath);
+    }
+
+    [Fact]
+    public void Finished_stream_carries_its_path()
+    {
+        var f = Assert.IsType<StreamFinished>(OutputLineParser.Parse(
+            @"YTDL|finished|309288|309288|NA|9047116.185120095|NA|C:\out\Me at the zoo [jNQXAC9IVRw].f140.m4a"));
+
+        Assert.Equal(@"C:\out\Me at the zoo [jNQXAC9IVRw].f140.m4a", f.StreamPath);
+    }
+
+    [Fact]
     public void Treats_NA_fields_as_unknown()
     {
         var p = Assert.IsType<DownloadProgress>(OutputLineParser.Parse("YTDL|downloading|1024|NA|NA|NA|NA"));
