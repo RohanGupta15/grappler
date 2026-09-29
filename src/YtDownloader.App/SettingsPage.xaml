@@ -41,7 +41,7 @@
                 </tk:SettingsCard>
                 <tk:SettingsCard Description="More is faster on a fast connection." Header="Downloads at the same time">
                     <tk:SettingsCard.HeaderIcon>
-                        <FontIcon Glyph="&#xE8FD;" />
+                        <FontIcon Glyph="&#xE945;" />
                     </tk:SettingsCard.HeaderIcon>
                     <NumberBox
                         MinWidth="120"

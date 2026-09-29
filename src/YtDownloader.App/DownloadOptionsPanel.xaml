@@ -100,9 +100,7 @@
                     MinWidth="0"
                     HorizontalAlignment="Right"
                     AutomationProperties.Name="Skip sponsor segments"
-                    IsOn="{x:Bind Item.SkipSponsors, Mode=TwoWay}"
-                    OffContent=""
-                    OnContent="" />
+                    IsOn="{x:Bind Item.SkipSponsors, Mode=TwoWay}" />
             </Grid>
             <Button
                 x:Name="TrimButton"

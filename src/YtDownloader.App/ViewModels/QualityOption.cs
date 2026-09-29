@@ -22,7 +22,7 @@ public sealed record QualityOption(string Key, string Label, Quality Quality)
     /// <summary>Choices for a video whose available heights are known.</summary>
     public static List<QualityOption> ForHeights(IReadOnlyList<int> heights)
     {
-        List<QualityOption> options = [new("best", heights.Count > 0 ? $"Best ({heights[0]}p)" : "Best quality", Quality.BestVideo)];
+        List<QualityOption> options = [new("best", heights.Count > 0 ? $"Best quality ({heights[0]}p)" : "Best quality", Quality.BestVideo)];
         options.AddRange(heights.Skip(1).Where(h => h >= 144).Select(h => new QualityOption(h.ToString(), Format.Height(h), Quality.VideoUpTo(h))));
         options.Add(Standard[4]);
         options.Add(Standard[5]);
