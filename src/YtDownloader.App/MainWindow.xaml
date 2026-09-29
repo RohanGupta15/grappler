@@ -16,7 +16,6 @@
 
         <TitleBar
             x:Name="AppTitleBar"
-            Height="48"
             Title="YT Downloader"
             BackRequested="AppTitleBar_BackRequested">
             <TitleBar.IconSource>
