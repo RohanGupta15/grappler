@@ -11,14 +11,14 @@
 
   <Identity
     Name="FFF261BB-D71E-4159-BD1B-B36CF28B902F"
-    Publisher="CN=YtDownloader Dev"
+    Publisher="CN=Rohan Gupta"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="FFF261BB-D71E-4159-BD1B-B36CF28B902F" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>YT Downloader</DisplayName>
-    <PublisherDisplayName>YtDownloader</PublisherDisplayName>
+    <PublisherDisplayName>Rohan Gupta</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <uap10:PackageIntegrity>
       <uap10:Content Enforcement="on"/>

@@ -158,7 +158,7 @@ public sealed class EngineManager(string root, HttpClient http)
 
             var installed = ReadInstalledHashes();
             installed[c.Name] = expected;
-            File.WriteAllText(InstalledHashesPath, JsonSerializer.Serialize(installed));
+            File.WriteAllText(InstalledHashesPath, JsonSerializer.Serialize(installed, InstalledHashesJson.Default.DictionaryStringString));
         }
         finally
         {
@@ -173,7 +173,7 @@ public sealed class EngineManager(string root, HttpClient http)
         try
         {
             return File.Exists(InstalledHashesPath)
-                ? JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(InstalledHashesPath)) ?? []
+                ? JsonSerializer.Deserialize(File.ReadAllText(InstalledHashesPath), InstalledHashesJson.Default.DictionaryStringString) ?? []
                 : [];
         }
         catch (JsonException)
@@ -211,3 +211,7 @@ public sealed class EngineManager(string root, HttpClient http)
         }
     }
 }
+
+// Source-generated so installed.json still works in the trimmed Release build.
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string>))]
+internal sealed partial class InstalledHashesJson : System.Text.Json.Serialization.JsonSerializerContext;
