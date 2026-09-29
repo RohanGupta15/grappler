@@ -487,5 +487,3 @@ $RECYCLE.BIN/
 !src/YtDownloader.App/
 !src/YtDownloader.App/Properties/PublishProfiles/*.pubxml
 
-# Impeccable review screenshots are regenerated each review
-.impeccable/review/

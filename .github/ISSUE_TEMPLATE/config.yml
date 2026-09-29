@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A site isn't supported or broke after an engine update
+    url: https://github.com/yt-dlp/yt-dlp/issues
+    about: Site support comes from yt-dlp. Check there if the newest yt-dlp fails too.
+  - name: Report a security vulnerability
+    url: https://github.com/RohanGupta15/grappler/security/advisories/new
+    about: Please report security problems privately.

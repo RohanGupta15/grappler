@@ -1,0 +1,78 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish a release with Setup.exe (Velopack, self-updating)
+# and, when the signing secrets are set, a signed MSIX with its public certificate.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+      MSIX_CERT_PFX_BASE64: ${{ secrets.MSIX_CERT_PFX_BASE64 }}
+      MSIX_CERT_PASSWORD: ${{ secrets.MSIX_CERT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Read version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Tag must look like v1.2.3, got ${{ github.ref_name }}" }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Test Core
+        run: dotnet test tests/YtDownloader.Core.Tests -c Release
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      # Lets vpk build delta updates against the last release. The first release has none.
+      - name: Download previous release
+        continue-on-error: true
+        run: dotnet vpk download github --repoUrl ${{ env.REPO_URL }} --channel win-x64 --outputDir artifacts/releases --token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Setup.exe
+        shell: pwsh
+        run: ./scripts/build-setup.ps1 -Version ${{ steps.version.outputs.value }}
+
+      - name: Publish release
+        run: >-
+          dotnet vpk upload github
+          --repoUrl ${{ env.REPO_URL }}
+          --channel win-x64
+          --outputDir artifacts/releases
+          --tag ${{ github.ref_name }}
+          --releaseName "YT Downloader ${{ steps.version.outputs.value }}"
+          --publish
+          --token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Import MSIX signing certificate
+        if: env.MSIX_CERT_PFX_BASE64 != ''
+        shell: pwsh
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:MSIX_CERT_PFX_BASE64))
+          $password = ConvertTo-SecureString $env:MSIX_CERT_PASSWORD -AsPlainText -Force
+          Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
+          Remove-Item $pfx
+
+      - name: Build and attach MSIX
+        if: env.MSIX_CERT_PFX_BASE64 != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/build-msix.ps1 -Version ${{ steps.version.outputs.value }}
+          $files = Get-ChildItem artifacts/msix -File | Where-Object Extension -in '.msix', '.cer'
+          gh release upload ${{ github.ref_name }} $files.FullName --clobber

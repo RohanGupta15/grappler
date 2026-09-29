@@ -1,0 +1,7 @@
+# Store text with LF in the repo; Windows checkouts get CRLF from core.autocrlf.
+* text=auto
+
+*.png binary
+*.ico binary
+*.pfx binary
+*.cer binary

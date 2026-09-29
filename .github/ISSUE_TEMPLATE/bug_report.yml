@@ -1,0 +1,71 @@
+name: Bug report
+description: Something doesn't work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. If a site suddenly stopped working, open **Settings > Download engine > Check for updates** first; a newer yt-dlp usually fixes it.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Paste a link to a public video
+        2. Pick 1080p and press Start
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in Settings > About.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Setup.exe
+        - MSIX
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Press Win+R, type `winver`.
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: yt-dlp version
+      description: Shown in Settings > Download engine.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or crash log
+      description: Copy the error from the app, or the latest entry from `%LOCALAPPDATA%\YtDownloader\crash.log`.
+      render: text
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: I'm using this for personal use, on content I have the right to download.
+          required: true
