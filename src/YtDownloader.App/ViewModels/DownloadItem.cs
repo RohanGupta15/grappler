@@ -6,7 +6,7 @@ using YtDownloader.Core.YtDlp;
 
 namespace YtDownloader.App.ViewModels;
 
-public enum DownloadStatus { LookingUp, Waiting, Paused, Downloading, Processing, Done, Failed }
+public enum DownloadStatus { LookingUp, Ready, Waiting, Paused, Downloading, Processing, Done, Failed }
 
 public sealed partial class DownloadItem : ObservableObject
 {
@@ -46,11 +46,14 @@ public sealed partial class DownloadItem : ObservableObject
     // ---- Status ----
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsLookingUp), nameof(CanEditOptions), nameof(IsPaused), nameof(IsDone), nameof(IsFailed), nameof(StatusGlyph))]
+    [NotifyPropertyChangedFor(nameof(IsLookingUp), nameof(CanEditOptions), nameof(IsPaused), nameof(CanStart), nameof(StartText), nameof(IsDone), nameof(IsFailed), nameof(StatusGlyph))]
     public partial DownloadStatus Status { get; set; }
 
     public bool IsLookingUp => Status == DownloadStatus.LookingUp;
-    public bool CanEditOptions => Status is DownloadStatus.Waiting or DownloadStatus.Paused;
+    public bool CanEditOptions => Status is DownloadStatus.Ready or DownloadStatus.Waiting or DownloadStatus.Paused;
+    /// <summary>Looked up but not started yet, or paused: the row shows its start button.</summary>
+    public bool CanStart => Status is DownloadStatus.Ready or DownloadStatus.Paused;
+    public string StartText => IsPaused ? "Resume" : "Start download";
     public bool IsPaused => Status == DownloadStatus.Paused;
     public bool IsDone => Status == DownloadStatus.Done;
     public bool IsFailed => Status == DownloadStatus.Failed;

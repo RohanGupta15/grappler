@@ -127,11 +127,11 @@
                         </StackPanel>
                         <Button
                             Grid.Column="2"
-                            AutomationProperties.Name="Resume"
+                            AutomationProperties.Name="{x:Bind StartText, Mode=OneWay}"
                             Command="{x:Bind ResumeCommand}"
                             Style="{StaticResource IconButtonStyle}"
-                            ToolTipService.ToolTip="Resume"
-                            Visibility="{x:Bind IsPaused, Mode=OneWay}">
+                            ToolTipService.ToolTip="{x:Bind StartText, Mode=OneWay}"
+                            Visibility="{x:Bind CanStart, Mode=OneWay}">
                             <FontIcon FontSize="16" Glyph="&#xE768;" />
                         </Button>
                         <Button
@@ -251,7 +251,7 @@
                         <Setter Target="AddButton.(Grid.Row)" Value="0" />
                         <Setter Target="Divider.(Grid.Row)" Value="0" />
                         <Setter Target="SettingsButton.(Grid.Row)" Value="0" />
-                        <Setter Target="AddBar.Padding" Value="24,0,24,12" />
+                        <Setter Target="AddBar.Padding" Value="24,8,24,12" />
                         <Setter Target="Lists.Padding" Value="24,12,24,24" />
                         <Setter Target="Banners.Margin" Value="24,0,24,0" />
                     </VisualState.Setters>
@@ -262,7 +262,7 @@
         <!--  Add bar on Mica. Compact: link on its own row, controls below.  -->
         <Grid
             x:Name="AddBar"
-            Padding="16,0,16,12"
+            Padding="16,8,16,12"
             ColumnSpacing="8"
             RowSpacing="8">
             <Grid.ColumnDefinitions>
@@ -488,9 +488,14 @@
                         Style="{StaticResource GroupHeaderGridStyle}"
                         Visibility="{x:Bind ViewModel.Queue.HasWaiting, Mode=OneWay}">
                         <TextBlock VerticalAlignment="Center">
-                            <Run FontWeight="SemiBold" Text="Waiting" />
+                            <Run FontWeight="SemiBold" Text="Up next" />
                             <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Queue.WaitingCount, Mode=OneWay}" />
                         </TextBlock>
+                        <HyperlinkButton
+                            HorizontalAlignment="Right"
+                            Command="{x:Bind ViewModel.Queue.StartAllCommand}"
+                            Content="Start all"
+                            Visibility="{x:Bind ViewModel.Queue.HasStartable, Mode=OneWay}" />
                     </Grid>
                     <ItemsRepeater ItemTemplate="{StaticResource WaitingTemplate}" ItemsSource="{x:Bind ViewModel.Queue.Waiting}">
                         <ItemsRepeater.Layout>

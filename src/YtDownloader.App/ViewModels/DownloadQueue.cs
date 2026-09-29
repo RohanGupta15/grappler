@@ -34,6 +34,7 @@ public sealed partial class DownloadQueue : ObservableObject
     public bool HasWaiting => Waiting.Count > 0;
     public bool HasPlaylists => Playlists.Count > 0;
     public bool HasFinished => Finished.Count > 0;
+    public bool HasStartable => Waiting.Any(i => i.CanStart);
     public bool IsEmpty => !HasActive && !HasWaiting && !HasPlaylists && !HasFinished;
     public string ActiveCount => Active.Count.ToString();
     public string WaitingCount => Waiting.Count.ToString();
@@ -44,7 +45,7 @@ public sealed partial class DownloadQueue : ObservableObject
 
     private void OnGroupsChanged()
     {
-        foreach (var name in new[] { nameof(HasActive), nameof(HasWaiting), nameof(HasPlaylists), nameof(HasFinished), nameof(IsEmpty), nameof(ActiveCount), nameof(WaitingCount), nameof(FinishedCount) })
+        foreach (var name in new[] { nameof(HasActive), nameof(HasWaiting), nameof(HasPlaylists), nameof(HasFinished), nameof(IsEmpty), nameof(HasStartable), nameof(ActiveCount), nameof(WaitingCount), nameof(FinishedCount) })
             OnPropertyChanged(name);
         PauseAllCommand.NotifyCanExecuteChanged();
         ClearFinishedCommand.NotifyCanExecuteChanged();
@@ -88,8 +89,8 @@ public sealed partial class DownloadQueue : ObservableObject
             item.Duration = video.Duration;
             item.ThumbnailUrl = video.ThumbnailUrl;
             SetQualityOptions(item, QualityOption.ForHeights(video.AvailableHeights), defaultQuality.Key);
-            MoveTo(item, DownloadStatus.Waiting);
-            Pump();
+            // Nothing starts on its own: the user checks the options, then presses Start.
+            MoveTo(item, DownloadStatus.Ready);
         }
         catch (Exception ex)
         {
@@ -244,6 +245,7 @@ public sealed partial class DownloadQueue : ObservableObject
         };
         item.Status = status;
         if (status == DownloadStatus.Waiting) item.StatusText = "Waiting";
+        if (status == DownloadStatus.Ready) item.StatusText = "Ready to download";
         foreach (var group in new[] { Active, Waiting, Finished })
             if (group != target) group.Remove(item);
         if (!target.Contains(item))
@@ -251,6 +253,7 @@ public sealed partial class DownloadQueue : ObservableObject
             if (target == Finished) target.Insert(0, item);
             else target.Add(item);
         }
+        OnPropertyChanged(nameof(HasStartable));
     }
 
     // ---- Row actions ----
@@ -323,6 +326,13 @@ public sealed partial class DownloadQueue : ObservableObject
     private void PauseAll()
     {
         foreach (var item in Active.ToList()) Pause(item);
+    }
+
+    [RelayCommand]
+    private void StartAll()
+    {
+        foreach (var item in Waiting.Where(i => i.CanStart).ToList()) MoveTo(item, DownloadStatus.Waiting);
+        Pump();
     }
 
     private bool CanClearFinished() => HasFinished;
