@@ -9,6 +9,7 @@ namespace YtDownloader.App;
 public sealed partial class SettingsPage : Page
 {
     public SettingsViewModel ViewModel { get; } = new(App.Current.Settings, App.Current.Engine, App.Current.Queue);
+    public string AppVersion { get; } = "Version " + App.Current.Updater.CurrentVersion;
 
     public SettingsPage() => InitializeComponent();
 

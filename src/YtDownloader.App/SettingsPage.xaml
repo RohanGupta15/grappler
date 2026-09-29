@@ -105,7 +105,7 @@
                     <tk:SettingsCard.HeaderIcon>
                         <FontIcon Glyph="&#xE946;" />
                     </tk:SettingsCard.HeaderIcon>
-                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.0" />
+                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind AppVersion}" />
                 </tk:SettingsCard>
             </StackPanel>
         </ScrollViewer>

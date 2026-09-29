@@ -12,7 +12,7 @@
   <Identity
     Name="FFF261BB-D71E-4159-BD1B-B36CF28B902F"
     Publisher="CN=Rohan Gupta"
-    Version="1.0.0.0" />
+    Version="0.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="FFF261BB-D71E-4159-BD1B-B36CF28B902F" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

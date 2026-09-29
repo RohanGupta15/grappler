@@ -356,6 +356,16 @@
             <!--  Closed banners collapse fully; each open one brings its own top gap.  -->
             <StackPanel x:Name="Banners" Margin="12,0,12,0">
                 <InfoBar
+                    Title="Update ready"
+                    Margin="0,12,0,0"
+                    IsOpen="{x:Bind Updater.IsUpdateReady, Mode=OneWay}"
+                    Message="{x:Bind Updater.UpdateMessage, Mode=OneWay}"
+                    Severity="Success">
+                    <InfoBar.ActionButton>
+                        <Button Command="{x:Bind Updater.RestartCommand}" Content="Restart now" />
+                    </InfoBar.ActionButton>
+                </InfoBar>
+                <InfoBar
                     Title="Getting ready"
                     Margin="0,12,0,0"
                     IsClosable="False"

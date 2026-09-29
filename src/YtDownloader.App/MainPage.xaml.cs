@@ -12,6 +12,7 @@ public sealed partial class MainPage : Page
     private bool _dialogOpen;
 
     public MainViewModel ViewModel { get; } = App.Current.ViewModel;
+    public Services.AppUpdater Updater { get; } = App.Current.Updater;
 
     public MainPage()
     {
@@ -32,7 +33,7 @@ public sealed partial class MainPage : Page
     public static string EmptyTitle(bool ready) => ready ? "Paste a link to get started" : "Your downloads will show up here";
 
     public static string EmptyBody(bool ready) => ready
-        ? "Copy a video or playlist link from your browser, then press Ctrl+V anywhere in this window. It downloads in the quality picked next to Add."
+        ? "Copy a video or playlist link from your browser, then press Ctrl+V anywhere in this window. Check its options, then press Start."
         : "You can paste a link as soon as setup finishes.";
 
     // MenuFlyout items can't be data-bound, so the quality menu is built here.

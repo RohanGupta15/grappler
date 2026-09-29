@@ -19,6 +19,7 @@ public partial class App : Application
     public AppSettings Settings { get; }
     public DownloadQueue Queue { get; }
     public MainViewModel ViewModel { get; }
+    public AppUpdater Updater { get; } = new();
 
     public MainWindow Window => (MainWindow)_window!;
 
@@ -37,6 +38,7 @@ public partial class App : Application
     {
         _window = new MainWindow();
         _window.Activate();
+        _ = Updater.CheckAsync();
     }
 
     private static void LogCrash(Exception ex)
