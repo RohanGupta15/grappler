@@ -11,6 +11,12 @@ public sealed partial class PlaylistDialog : ContentDialog
     {
         Playlist = playlist;
         InitializeComponent();
+        // ContentDialog adds 24 px padding each side plus a margin to the window edge.
+        // Follow the window while open too, since the user can resize it.
+        void Fit() => Body.Width = Math.Min(590, XamlRoot.Size.Width - 96);
+        void OnRootChanged(Microsoft.UI.Xaml.XamlRoot root, Microsoft.UI.Xaml.XamlRootChangedEventArgs args) => Fit();
+        Opened += (_, _) => { Fit(); XamlRoot.Changed += OnRootChanged; };
+        Closed += (_, _) => XamlRoot.Changed -= OnRootChanged;
         UpdateSelectAll();
         playlist.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(PlaylistItem.SelectedCount)) UpdateSelectAll(); };
     }

@@ -2,15 +2,30 @@
 <Application
     x:Class="YtDownloader.App.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:YtDownloader.App">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+
+            <!--  Status lines, sizes and durations change live, so digits keep a fixed width.  -->
+            <Style
+                x:Key="CaptionSecondaryStyle"
+                BasedOn="{StaticResource CaptionTextBlockStyle}"
+                TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+            </Style>
+
+            <Style
+                x:Key="TimeTextBoxStyle"
+                BasedOn="{StaticResource DefaultTextBoxStyle}"
+                TargetType="TextBox">
+                <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

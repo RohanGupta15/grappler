@@ -26,7 +26,8 @@
                 <TextBlock
                     Foreground="White"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind Duration, Mode=OneWay}" />
+                    Text="{x:Bind Duration, Mode=OneWay}"
+                    Typography.NumeralAlignment="Tabular" />
             </Border>
         </Grid>
     </Border>

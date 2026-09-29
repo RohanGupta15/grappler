@@ -15,14 +15,29 @@
         <x:Double x:Key="ContentDialogMaxWidth">640</x:Double>
     </ContentDialog.Resources>
 
-    <StackPanel Width="590" Spacing="12">
+    <!--  Width is set on open from the window size, up to 590.  -->
+    <StackPanel x:Name="Body" Spacing="12">
         <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Byline}" />
 
         <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center" Text="Quality" />
+            <ComboBox
+                Grid.Column="1"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Quality"
+                ItemsSource="{x:Bind Playlist.QualityOptions}"
+                SelectedItem="{x:Bind Playlist.SelectedQuality, Mode=TwoWay}" />
+        </Grid>
+
+        <!--  13 = ListView border 1 + item padding 12, so this lines up with the row checkboxes.  -->
+        <Grid Margin="13,0,0,0" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <CheckBox
                 x:Name="SelectAllBox"
@@ -31,15 +46,10 @@
                 IsThreeState="False" />
             <TextBlock
                 Grid.Column="1"
+                HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 Text="{x:Bind local:PlaylistDialog.CountLabel(Playlist.SelectedCount, Playlist.Entries.Count), Mode=OneWay}" />
-            <ComboBox
-                Grid.Column="2"
-                HorizontalAlignment="Stretch"
-                AutomationProperties.Name="Quality"
-                ItemsSource="{x:Bind Playlist.QualityOptions}"
-                SelectedItem="{x:Bind Playlist.SelectedQuality, Mode=TwoWay}" />
         </Grid>
 
         <ListView
@@ -49,6 +59,11 @@
             CornerRadius="{StaticResource ControlCornerRadius}"
             ItemsSource="{x:Bind Playlist.Entries}"
             SelectionMode="None">
+            <ListView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
+                    <Setter Property="Padding" Value="12,0,12,0" />
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="vm:PlaylistEntryItem">
                     <Grid Height="56" ColumnSpacing="12">
@@ -79,7 +94,7 @@
                             Grid.Column="3"
                             VerticalAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Style="{StaticResource CaptionSecondaryStyle}"
                             Text="{x:Bind DurationText}" />
                     </Grid>
                 </DataTemplate>

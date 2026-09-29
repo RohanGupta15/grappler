@@ -6,6 +6,7 @@
     xmlns:local="using:YtDownloader.App"
     xmlns:tk="using:CommunityToolkit.WinUI.Controls"
     xmlns:vm="using:YtDownloader.App.ViewModels"
+    KeyboardAcceleratorPlacementMode="Hidden"
     NavigationCacheMode="Required">
 
     <Page.KeyboardAccelerators>
@@ -33,9 +34,6 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
-        </Style>
-        <Style x:Key="CaptionSecondaryStyle" BasedOn="{StaticResource CaptionTextBlockStyle}" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         </Style>
 
         <!--  Downloading  -->
@@ -146,95 +144,13 @@
                         </Button>
                     </Grid>
                 </Expander.Header>
-                <tk:WrapPanel HorizontalSpacing="16" VerticalSpacing="12">
-                    <ComboBox
-                        Width="200"
-                        Header="Quality"
-                        ItemsSource="{x:Bind QualityOptions}"
-                        SelectedItem="{x:Bind SelectedQuality, Mode=TwoWay}" />
-                    <ComboBox
-                        Width="200"
-                        Header="Subtitles"
-                        ItemsSource="{x:Bind SubtitleOptions}"
-                        SelectedItem="{x:Bind SelectedSubtitles, Mode=TwoWay}" />
-                    <StackPanel Width="200" Spacing="8">
-                        <TextBlock Text="Trim" />
-                        <Grid ColumnSpacing="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox
-                                AutomationProperties.Name="Trim start"
-                                PlaceholderText="0:00"
-                                Text="{x:Bind TrimStartText, Mode=TwoWay}" />
-                            <TextBlock
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="to" />
-                            <TextBox
-                                Grid.Column="2"
-                                AutomationProperties.Name="Trim end"
-                                PlaceholderText="{x:Bind DurationText, Mode=OneWay}"
-                                Text="{x:Bind TrimEndText, Mode=TwoWay}" />
-                        </Grid>
-                    </StackPanel>
-                    <ToggleSwitch
-                        Width="200"
-                        Header="Skip sponsor segments"
-                        IsOn="{x:Bind SkipSponsors, Mode=TwoWay}" />
-                </tk:WrapPanel>
+                <local:DownloadOptionsPanel Item="{x:Bind}" />
             </Expander>
         </DataTemplate>
 
         <!--  Playlists  -->
         <DataTemplate x:Key="PlaylistTemplate" x:DataType="vm:PlaylistItem">
-            <Grid Style="{StaticResource RowCardStyle}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="112" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <FontIcon
-                    Height="40"
-                    FontSize="20"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Glyph="&#xE90B;" />
-                <StackPanel
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    Spacing="2">
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Text="{x:Bind Title}"
-                        TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        Style="{StaticResource CaptionSecondaryStyle}"
-                        Text="{x:Bind Summary, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-                <Button
-                    Grid.Column="2"
-                    Command="{x:Bind ChooseCommand}"
-                    Content="Choose videos" />
-                <Button
-                    Grid.Column="3"
-                    Command="{x:Bind StartCommand}"
-                    Content="{x:Bind StartLabel, Mode=OneWay}"
-                    Style="{StaticResource AccentButtonStyle}" />
-                <Button
-                    Grid.Column="4"
-                    AutomationProperties.Name="Remove playlist"
-                    Command="{x:Bind RemoveCommand}"
-                    Style="{StaticResource IconButtonStyle}"
-                    ToolTipService.ToolTip="Remove">
-                    <FontIcon FontSize="16" Glyph="&#xE711;" />
-                </Button>
-            </Grid>
+            <local:PlaylistRow Item="{x:Bind}" />
         </DataTemplate>
 
         <!--  Done and failed  -->
@@ -328,6 +244,7 @@
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
                         <Setter Target="UrlBox.(Grid.ColumnSpan)" Value="1" />
+                        <Setter Target="PasteHint.(Grid.ColumnSpan)" Value="1" />
                         <Setter Target="QualityButton.(Grid.Row)" Value="0" />
                         <Setter Target="QualityButton.(Grid.Column)" Value="1" />
                         <Setter Target="QualityButton.HorizontalAlignment" Value="Left" />
@@ -336,7 +253,7 @@
                         <Setter Target="SettingsButton.(Grid.Row)" Value="0" />
                         <Setter Target="AddBar.Padding" Value="24,4,24,16" />
                         <Setter Target="Lists.Padding" Value="24,12,24,24" />
-                        <Setter Target="Banners.Margin" Value="24,24,24,0" />
+                        <Setter Target="Banners.Margin" Value="24,0,24,0" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -367,10 +284,22 @@
                 KeyDown="UrlBox_KeyDown"
                 PlaceholderText="Paste a video or playlist link"
                 Text="{x:Bind ViewModel.Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <!--  Shortcut hint inside the empty field, like the placeholder.  -->
+            <TextBlock
+                x:Name="PasteHint"
+                Grid.ColumnSpan="5"
+                Margin="0,0,12,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                IsHitTestVisible="False"
+                Style="{StaticResource CaptionSecondaryStyle}"
+                Text="Ctrl+V"
+                Visibility="{x:Bind local:Converters.VisibleIfEmpty(ViewModel.Url), Mode=OneWay}" />
             <DropDownButton
                 x:Name="QualityButton"
                 Grid.Row="1"
                 HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
                 AutomationProperties.Name="Quality for new links"
                 Content="{x:Bind ViewModel.DefaultQuality.Label, Mode=OneWay}"
                 IsEnabled="{x:Bind ViewModel.IsEngineReady, Mode=OneWay}"
@@ -424,14 +353,14 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel
-                x:Name="Banners"
-                Margin="12,12,12,0"
-                Spacing="8">
+            <!--  Closed banners collapse fully; each open one brings its own top gap.  -->
+            <StackPanel x:Name="Banners" Margin="12,0,12,0">
                 <InfoBar
                     Title="Getting ready"
+                    Margin="0,12,0,0"
                     IsClosable="False"
                     IsOpen="{x:Bind ViewModel.IsInstallingEngine, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsInstallingEngine, Mode=OneWay}"
                     Message="Downloading the tools YT Downloader needs. This happens once and takes about a minute."
                     Severity="Informational">
                     <ItemsRepeater Margin="0,0,0,16" ItemsSource="{x:Bind ViewModel.EngineComponents}">
@@ -464,8 +393,10 @@
 
                 <InfoBar
                     Title="Setup didn't finish"
+                    Margin="0,12,0,0"
                     IsClosable="False"
                     IsOpen="{x:Bind ViewModel.HasEngineError, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.HasEngineError, Mode=OneWay}"
                     Message="{x:Bind ViewModel.EngineError, Mode=OneWay}"
                     Severity="Error">
                     <InfoBar.ActionButton>
@@ -475,8 +406,10 @@
 
                 <InfoBar
                     Title="Link on your clipboard"
+                    Margin="0,12,0,0"
                     CloseButtonCommand="{x:Bind ViewModel.DismissClipboardCommand}"
                     IsOpen="{x:Bind ViewModel.HasClipboardUrl, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.HasClipboardUrl, Mode=OneWay}"
                     Message="{x:Bind ViewModel.ClipboardUrl, Mode=OneWay}"
                     Severity="Informational">
                     <InfoBar.IconSource>

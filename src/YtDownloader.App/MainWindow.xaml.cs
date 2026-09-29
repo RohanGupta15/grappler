@@ -14,6 +14,8 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        // Tall caption buttons to match the 48 px title bar.
+        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
         AppWindow.SetIcon("Assets/AppIcon.ico");
         // AppWindow sizes are physical pixels; scale the 1200 x 800 design size by the monitor's DPI.
         var scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this)) / 96.0;

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="YtDownloader.App.DownloadOptionsPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="Compact" />
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="WideLayout.Visibility" Value="Visible" />
+                        <Setter Target="CompactLayout.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <!--  Wide: four equal columns lined up under the title (thumbnail 112 + gap 16).  -->
+        <Grid
+            x:Name="WideLayout"
+            Margin="128,0,0,0"
+            ColumnSpacing="16"
+            Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                Header="Quality"
+                ItemsSource="{x:Bind Item.QualityOptions, Mode=OneWay}"
+                SelectedItem="{x:Bind Item.SelectedQuality, Mode=TwoWay}" />
+            <ComboBox
+                Grid.Column="1"
+                HorizontalAlignment="Stretch"
+                Header="Subtitles"
+                ItemsSource="{x:Bind Item.SubtitleOptions, Mode=OneWay}"
+                SelectedItem="{x:Bind Item.SelectedSubtitles, Mode=TwoWay}" />
+            <StackPanel Grid.Column="2" Spacing="8">
+                <TextBlock Text="Trim" />
+                <Grid ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        AutomationProperties.Name="Trim start"
+                        PlaceholderText="0:00"
+                        Style="{StaticResource TimeTextBoxStyle}"
+                        Text="{x:Bind Item.TrimStartText, Mode=TwoWay}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="to" />
+                    <TextBox
+                        Grid.Column="2"
+                        AutomationProperties.Name="Trim end"
+                        PlaceholderText="{x:Bind Item.DurationText, Mode=OneWay}"
+                        Style="{StaticResource TimeTextBoxStyle}"
+                        Text="{x:Bind Item.TrimEndText, Mode=TwoWay}" />
+                </Grid>
+            </StackPanel>
+            <ToggleSwitch
+                Grid.Column="3"
+                Header="Skip sponsor segments"
+                IsOn="{x:Bind Item.SkipSponsors, Mode=TwoWay}" />
+        </Grid>
+
+        <!--  Compact: two columns, sponsor switch inline, trim behind a button.  -->
+        <StackPanel x:Name="CompactLayout" Spacing="12">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Quality"
+                    ItemsSource="{x:Bind Item.QualityOptions, Mode=OneWay}"
+                    SelectedItem="{x:Bind Item.SelectedQuality, Mode=TwoWay}" />
+                <ComboBox
+                    Grid.Column="1"
+                    HorizontalAlignment="Stretch"
+                    Header="Subtitles"
+                    ItemsSource="{x:Bind Item.SubtitleOptions, Mode=OneWay}"
+                    SelectedItem="{x:Bind Item.SelectedSubtitles, Mode=TwoWay}" />
+            </Grid>
+            <Grid>
+                <TextBlock VerticalAlignment="Center" Text="Skip sponsor segments" />
+                <ToggleSwitch
+                    MinWidth="0"
+                    HorizontalAlignment="Right"
+                    AutomationProperties.Name="Skip sponsor segments"
+                    IsOn="{x:Bind Item.SkipSponsors, Mode=TwoWay}"
+                    OffContent=""
+                    OnContent="" />
+            </Grid>
+            <Button
+                x:Name="TrimButton"
+                Click="TrimButton_Click"
+                Content="Trim a clip…" />
+            <Grid
+                x:Name="CompactTrim"
+                ColumnSpacing="6"
+                Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    AutomationProperties.Name="Trim start"
+                    PlaceholderText="0:00"
+                    Style="{StaticResource TimeTextBoxStyle}"
+                    Text="{x:Bind Item.TrimStartText, Mode=TwoWay}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="to" />
+                <TextBox
+                    Grid.Column="2"
+                    AutomationProperties.Name="Trim end"
+                    PlaceholderText="{x:Bind Item.DurationText, Mode=OneWay}"
+                    Style="{StaticResource TimeTextBoxStyle}"
+                    Text="{x:Bind Item.TrimEndText, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

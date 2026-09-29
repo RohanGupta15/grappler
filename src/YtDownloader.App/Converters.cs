@@ -12,6 +12,8 @@ public static class Converters
 
     public static Visibility VisibleIf(string? text) => string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
 
+    public static Visibility VisibleIfEmpty(string? text) => string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
+
     public static Visibility VisibleIfNot(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
 
     public static bool Not(bool value) => !value;

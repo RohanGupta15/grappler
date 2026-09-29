@@ -167,12 +167,13 @@ public sealed partial class DownloadQueue : ObservableObject
                     item.Progress = overall * 100;
                     item.PercentText = $"{overall:0%}";
                     var what = !isVideo ? "audio" : finishedStreams == 0 ? "video" : "audio";
+                    // Most useful first: the line is trimmed, not wrapped, in narrow windows.
                     item.StatusText = string.Join(" · ", new[]
                     {
-                        $"Downloading {what}",
-                        p.TotalBytes is { } t ? $"{Format.Bytes(p.DownloadedBytes)} of {Format.Bytes(t)}" : Format.Bytes(p.DownloadedBytes),
+                        p.Eta is { } eta ? $"{Format.Duration(eta)} left" : $"Downloading {what}",
                         p.BytesPerSecond is { } s ? $"{Format.Bytes((long)s)}/s" : null,
-                        p.Eta is { } eta ? $"{Format.Duration(eta)} left" : null,
+                        p.TotalBytes is { } t ? $"{Format.Bytes(p.DownloadedBytes)} of {Format.Bytes(t)}" : Format.Bytes(p.DownloadedBytes),
+                        p.Eta is not null ? (what == "video" ? "Video" : "Audio") : null,
                         item.SelectedQuality?.Label,
                     }.Where(x => x is not null));
                     break;
