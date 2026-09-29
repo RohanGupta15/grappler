@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "YtDownloader.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "YtDownloader.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
