@@ -28,7 +28,7 @@
 - **Extras per download.** Subtitles saved as `.srt`, sponsor segments removed with [SponsorBlock](https://sponsor.ajay.app/), or trim to just a clip.
 - **Playlists.** Paste a playlist link and pick the videos you want.
 - **Pause, resume, retry.** Pause keeps the partial file and picks up where it left off. Cancel cleans up after itself.
-- **Parallel downloads.** Run 1 to 5 at once.
+- **Parallel downloads.** Run 1 to 5 at once, with overall progress on the taskbar button and a notification when they finish.
 - **Clipboard aware.** Copy a link in your browser, switch to the app, and it offers to add it. Ctrl+V works anywhere in the window.
 - **Looks like Windows.** Fluent design with Mica, light and dark themes that follow Windows, and full keyboard use.
 - **Keeps itself current.** The app updates itself from GitHub Releases, and Settings updates the download engine when sites change.
@@ -76,7 +76,6 @@ assets/logo/             logo masters and the script that renders the app icons
 
 ## Roadmap
 
-- [ ] Taskbar progress and a notification when a download finishes
 - [ ] Channel pages
 - [ ] Download history that survives a restart
 - [ ] ARM64 build

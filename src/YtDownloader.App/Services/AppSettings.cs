@@ -21,6 +21,10 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty]
     public partial bool OfferClipboard { get; set; } = true;
 
+    /// <summary>Show a Windows notification when downloads finish while the window is in the background.</summary>
+    [ObservableProperty]
+    public partial bool NotifyWhenFinished { get; set; } = true;
+
     /// <summary>Language code such as "en"; null means no subtitles.</summary>
     [ObservableProperty]
     public partial string? SubtitleLanguage { get; set; }

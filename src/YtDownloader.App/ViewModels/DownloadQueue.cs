@@ -40,6 +40,12 @@ public sealed partial class DownloadQueue : ObservableObject
     public string WaitingCount => Waiting.Count.ToString();
     public string FinishedCount => Finished.Count.ToString();
 
+    /// <summary>Raised when the last running or queued download ends, with what finished since the previous batch.</summary>
+    public event EventHandler<DownloadBatch>? BatchFinished;
+
+    private readonly List<DownloadItem> _batchDone = [];
+    private readonly List<DownloadItem> _batchFailed = [];
+
     /// <summary>Raised when a playlist has been looked up, so the page can offer the picker.</summary>
     public event EventHandler<PlaylistItem>? PlaylistAdded;
 
@@ -205,6 +211,7 @@ public sealed partial class DownloadQueue : ObservableObject
             item.SizeText = path is not null && File.Exists(path) ? Format.Bytes(new FileInfo(path).Length) : "";
             item.Progress = 100;
             MoveTo(item, DownloadStatus.Done);
+            _batchDone.Add(item);
         }
         catch (OperationCanceledException)
         {
@@ -225,6 +232,7 @@ public sealed partial class DownloadQueue : ObservableObject
         {
             item.ErrorMessage = FriendlyError(ex);
             MoveTo(item, DownloadStatus.Failed);
+            _batchFailed.Add(item);
         }
         finally
         {
@@ -232,7 +240,18 @@ public sealed partial class DownloadQueue : ObservableObject
             item.Cts = null;
             cts.Dispose();
             Pump();
+            RaiseBatchFinishedIfIdle();
         }
+    }
+
+    private void RaiseBatchFinishedIfIdle()
+    {
+        if (Active.Count > 0 || Waiting.Any(i => i.Status == DownloadStatus.Waiting)) return;
+        if (_batchDone.Count + _batchFailed.Count == 0) return;
+        var batch = new DownloadBatch([.. _batchDone], [.. _batchFailed]);
+        _batchDone.Clear();
+        _batchFailed.Clear();
+        BatchFinished?.Invoke(this, batch);
     }
 
     private void MoveTo(DownloadItem item, DownloadStatus status)
@@ -351,3 +370,6 @@ public sealed partial class DownloadQueue : ObservableObject
         _ => ex.Message,
     };
 }
+
+/// <summary>Downloads that ended since the queue last went idle. Cancelled ones are not included.</summary>
+public sealed record DownloadBatch(IReadOnlyList<DownloadItem> Done, IReadOnlyList<DownloadItem> Failed);

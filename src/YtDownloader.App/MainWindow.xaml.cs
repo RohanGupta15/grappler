@@ -33,6 +33,17 @@ public sealed partial class MainWindow : Window
             area.X + (area.Width - width) / 2, area.Y + (area.Height - height) / 2, width, height));
     }
 
+    /// <summary>Whether this window is the foreground window; notifications only show when it isn't.</summary>
+    public bool IsActive { get; private set; } = true;
+
+    /// <summary>Restores the window if minimised and brings it to the front.</summary>
+    public void BringToFront()
+    {
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized } presenter)
+            presenter.Restore();
+        Activate();
+    }
+
     public void OpenSettings() =>
         RootFrame.Navigate(typeof(SettingsPage), null, new SlideNavigationTransitionInfo { Effect = SlideNavigationTransitionEffect.FromRight });
 
@@ -47,7 +58,8 @@ public sealed partial class MainWindow : Window
     // Offer a copied link when the user switches back to the app.
     private async void Window_Activated(object sender, WindowActivatedEventArgs args)
     {
-        if (args.WindowActivationState == WindowActivationState.Deactivated) return;
+        IsActive = args.WindowActivationState != WindowActivationState.Deactivated;
+        if (!IsActive) return;
         try
         {
             var content = Clipboard.GetContent();

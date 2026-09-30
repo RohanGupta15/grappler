@@ -20,6 +20,8 @@ public partial class App : Application
     public DownloadQueue Queue { get; }
     public MainViewModel ViewModel { get; }
     public AppUpdater Updater { get; } = new();
+    public DownloadNotifier Notifier { get; private set; } = null!;
+    public TaskbarProgress Taskbar { get; private set; } = null!;
 
     public MainWindow Window => (MainWindow)_window!;
 
@@ -36,9 +38,18 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // Register for notifications before the window opens, as the Windows App SDK asks.
+        Notifier = new DownloadNotifier(() => Window.BringToFront());
         _window = new MainWindow();
         _window.Activate();
         _ = Updater.CheckAsync();
+
+        Taskbar = new TaskbarProgress(WinRT.Interop.WindowNative.GetWindowHandle(_window), Queue);
+        Queue.BatchFinished += (_, batch) =>
+        {
+            if (Settings.NotifyWhenFinished && !Window.IsActive) Notifier.Show(batch);
+        };
+        _window.Closed += (_, _) => Notifier.Unregister();
     }
 
     private static void LogCrash(Exception ex)

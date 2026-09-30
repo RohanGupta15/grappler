@@ -4,6 +4,11 @@ Notable changes to this project are recorded here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+
+- Overall download progress on the taskbar button: green while downloading, yellow when everything is paused.
+- A Windows notification when downloads finish while the app is in the background, with Open and Show in folder for a single video. It can be turned off in Settings.
+
 ## [0.1.0]
 
 First public test release.

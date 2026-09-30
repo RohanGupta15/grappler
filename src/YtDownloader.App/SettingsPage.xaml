@@ -56,6 +56,12 @@
                     </tk:SettingsCard.HeaderIcon>
                     <ToggleSwitch IsOn="{x:Bind ViewModel.Settings.OfferClipboard, Mode=TwoWay}" />
                 </tk:SettingsCard>
+                <tk:SettingsCard Description="Only while this window is in the background. Progress always shows on the taskbar button." Header="Notify when downloads finish">
+                    <tk:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xEA8F;" />
+                    </tk:SettingsCard.HeaderIcon>
+                    <ToggleSwitch IsOn="{x:Bind ViewModel.Settings.NotifyWhenFinished, Mode=TwoWay}" />
+                </tk:SettingsCard>
 
                 <TextBlock Style="{StaticResource GroupHeaderStyle}" Text="Extras for new downloads" />
                 <tk:SettingsCard Description="Saved as an .srt file next to the video when the video has them." Header="Subtitles">
