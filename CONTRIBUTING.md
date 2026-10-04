@@ -145,4 +145,4 @@ Using the same certificate for every release means friends only trust it once.
    git push origin v0.1.0
    ```
 
-The [release workflow](.github/workflows/release.yml) runs the tests, builds Setup.exe (with delta updates from the previous release) and the MSIX, and publishes a GitHub Release. Installed copies pick up the update on their next launch.
+The [release workflow](.github/workflows/release.yml) runs the tests, builds Setup.exe (with delta updates from the previous release) and the MSIX, and publishes a GitHub Release whose notes are that version's CHANGELOG section plus install steps (`scripts/release-notes.ps1`). It stops before publishing if the CHANGELOG has no section for the tag. Installed copies pick up the update on their next launch.

@@ -31,6 +31,11 @@ jobs:
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Tag must look like v1.2.3, got ${{ github.ref_name }}" }
           "value=$version" >> $env:GITHUB_OUTPUT
 
+      # Fails here, before anything is published, if CHANGELOG.md has no section for this version.
+      - name: Write release notes
+        shell: pwsh
+        run: ./scripts/release-notes.ps1 -Version ${{ steps.version.outputs.value }} -OutFile "$env:RUNNER_TEMP/notes.md"
+
       - name: Test Core
         run: dotnet test tests/YtDownloader.Core.Tests -c Release
 
@@ -56,6 +61,13 @@ jobs:
           --releaseName "YT Downloader ${{ steps.version.outputs.value }}"
           --publish
           --token ${{ secrets.GITHUB_TOKEN }}
+
+      # vpk upload creates the release without a description; fill it from CHANGELOG.md.
+      - name: Add release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit ${{ github.ref_name }} --notes-file "$env:RUNNER_TEMP/notes.md"
 
       - name: Import MSIX signing certificate
         if: env.MSIX_CERT_PFX_BASE64 != ''
